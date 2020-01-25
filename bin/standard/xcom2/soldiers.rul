@@ -51,5 +51,14 @@ soldiers: #done
     femaleFrequency: 25
     soldierNames:
       - SoldierName/
+    nameInTitles: "{NAME}"
+    nameInTitlesLong: "{NAME}{STATSTRING}"
+    nameInLists: "{NAME}"
+    nameInListsLong: "{NAME}{STATSTRING}"
+    nameInPilotLists: "{NAME}"
+    nameInBattleScape: "{NAME}{STATSTRING}"
+    nameInBattleScapeAlternate: "{CALLSIGN}{TAGSTRING}"
+    nameStatStringSeparator: "/"
+    nameTagStatStringSeparator: ">"
     deathMale: 48
     deathFemale: 48

@@ -123,6 +123,7 @@ private:
 	UnitSide _fatalShotSide;
 	UnitBodyPart _fatalShotBodyPart;
 	std::string _murdererWeapon, _murdererWeaponAmmo;
+	const Mod *_mod;
 
 	// static data
 	std::string _type;
@@ -176,6 +177,8 @@ private:
 	void prepareUnitSounds();
 	/// Helper function preparing unit response sounds.
 	void prepareUnitResponseSounds(const Mod *mod);
+	/// Gets the script values (tags) of this unit as map
+	std::map<std::string, int> getUnitTagValues() const;
 public:
 	static const int MAX_SOLDIER_ID = 1000000;
 	/// Name of class used in script.
@@ -466,8 +469,12 @@ public:
 	const Armor *getArmor() const;
 	/// Sets the unit's name.
 	void setName(const std::string &name);
+	std::map<std::string, int> extracted() const;
+	
 	/// Gets the unit's name.
-	std::string getName(Language *lang, bool debugAppendId = false) const;
+	std::string getName(Language *lang, bool debugAppendId = false, bool primaryDisplay = true) const;
+	/// Gets the units StatTagString
+	std::string getStatTagString();
 	/// Gets the unit's stats.
 	UnitStats *getBaseStats();
 	/// Gets the unit's stats.

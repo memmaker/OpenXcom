@@ -89,7 +89,7 @@ PromotionsState::PromotionsState()
 		{
 			if ((*j)->isPromoted())
 			{
-				_lstSoldiers->addRow(3, (*j)->getName().c_str(), tr((*j)->getRankString()).c_str(), (*i)->getName().c_str());
+				_lstSoldiers->addRow(3, (*j)->getName(NDM_LIST).c_str(), tr((*j)->getRankString()).c_str(), (*i)->getName().c_str());
 			}
 		}
 	}

@@ -482,7 +482,8 @@ void SoldierTransformationState::performTransformation()
 		destinationSoldier->setGender(_sourceSoldier->getGender());
 		destinationSoldier->setLook(_sourceSoldier->getLook());
 		destinationSoldier->setLookVariant(_sourceSoldier->getLookVariant());
-
+		destinationSoldier->setCallsign(_sourceSoldier->getCallsign());
+		
 		// preserve nationality only for soldiers of the same type
 		if (_sourceSoldier->getRules() == newSoldierType)
 		{

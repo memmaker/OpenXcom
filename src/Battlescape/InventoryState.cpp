@@ -524,8 +524,6 @@ void InventoryState::edtSoldierChange(Action *)
 		{
 			// set the soldier's name
 			s->setName(_txtName->getText());
-			// also set the unit's name (with a statstring)
-			unit->setName(s->getName(true));
 		}
 	}
 }

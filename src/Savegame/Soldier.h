@@ -20,6 +20,7 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 #include "../Mod/Unit.h"
+#include "../Mod/RuleSoldier.h"
 #include "../Mod/StatString.h"
 #include "../Engine/Script.h"
 
@@ -79,10 +80,12 @@ private:
 	SoldierDeath *_death;
 	SoldierDiary *_diary;
 	std::string _statString;
+	std::string _statTagString;
 	bool _corpseRecovered;
 	std::map<std::string, int> _previousTransformations, _transformationBonuses;
 	std::vector<const RuleSoldierBonus*> _bonusCache;
 	ScriptValues<Soldier> _scriptValues;
+	const std::vector<StatString *> *_globalStatStrings;
 public:
 	/// Creates a new soldier.
 	Soldier(RuleSoldier *rules, Armor *armor, int id = 0);
@@ -93,7 +96,7 @@ public:
 	/// Saves the soldier to YAML.
 	YAML::Node save(const ScriptGlobal *shared) const;
 	/// Gets the soldier's name.
-	std::string getName(bool statstring = false, unsigned int maxLength = 20) const;
+	std::string getName(NameDisplayMode displayMode = NDM_DEFAULT, unsigned int maxLength = 20) const;
 	/// Sets the soldier's name.
 	void setName(const std::string &name);
 	/// Gets the soldier's callsign.
@@ -217,6 +220,8 @@ public:
 	void resetDiary();
 	/// Calculate statString.
 	void calcStatString(const std::vector<StatString *> &statStrings, bool psiStrengthEval);
+	/// Calculate unit state string
+	void calcStatTagString(const std::map<std::string, int> &unitTags);
 	/// Trains a soldier's physical stats
 	void trainPhys(int customTrainingFactor);
 	/// Is the soldier already fully trained?

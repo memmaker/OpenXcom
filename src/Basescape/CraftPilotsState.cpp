@@ -172,7 +172,7 @@ void CraftPilotsState::updateUI()
 		ss2 << (*i)->getStatsWithSoldierBonusesOnly()->reactions;
 		std::ostringstream ss3;
 		ss3 << (*i)->getStatsWithSoldierBonusesOnly()->bravery;
-		_lstPilots->addRow(5, (*i)->getName(false).c_str(), ss1.str().c_str(), ss2.str().c_str(), ss3.str().c_str(), "");
+		_lstPilots->addRow(5, (*i)->getName(NDM_LIST_PILOT).c_str(), ss1.str().c_str(), ss2.str().c_str(), ss3.str().c_str(), "");
 	}
 
 	std::ostringstream ss1;

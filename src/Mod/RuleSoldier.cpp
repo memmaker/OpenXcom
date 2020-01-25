@@ -43,6 +43,15 @@ RuleSoldier::RuleSoldier(const std::string &type) : _type(type), _listOrder(0), 
 	_allowPromotion(true), _allowPiloting(true), _showTypeInInventory(false),
 	_rankSprite(42), _rankSpriteBattlescape(20), _rankSpriteTiny(0)
 {
+	_nameFormats[NDM_TITLE] = "{NAME}";
+	_nameFormats[NDM_TITLE_LONG] = "{NAME}{STATSTRING}";
+	_nameFormats[NDM_LIST] = "{NAME}";
+	_nameFormats[NDM_LIST_LONG] = "{NAME}{STATSTRING}";
+	_nameFormats[NDM_LIST_PILOT] = "{NAME}";
+	_nameFormats[NDM_BATTLESCAPE_PRIMARY] = "{NAME}{STATSTRING}";
+	_nameFormats[NDM_BATTLESCAPE_SECONDARY] = "{CALLSIGN}{TAGSTRING}";
+	_nameFormats[NDM_STAT_SEPARATOR] = "/";
+	_nameFormats[NDM_TAG_SEPARATOR] = ">";
 }
 
 /**
@@ -117,6 +126,17 @@ void RuleSoldier::load(const YAML::Node &node, Mod *mod, int listOrder, const Mo
 	_value = node["value"].as<int>(_value);
 	_transferTime = node["transferTime"].as<int>(_transferTime);
 	_moraleLossWhenKilled = node["moraleLossWhenKilled"].as<int>(_moraleLossWhenKilled);
+	
+	_nameFormats[NDM_TITLE] = node["nameInTitles"].as<std::string>(_nameFormats[NDM_TITLE]);
+	_nameFormats[NDM_TITLE_LONG] = node["nameInTitlesLong"].as<std::string>(_nameFormats[NDM_TITLE_LONG]);
+	_nameFormats[NDM_LIST] = node["nameInLists"].as<std::string>(_nameFormats[NDM_LIST]);
+	_nameFormats[NDM_LIST_LONG] = node["nameInListsLong"].as<std::string>(_nameFormats[NDM_LIST_LONG]);
+	_nameFormats[NDM_LIST_PILOT] = node["nameInPilotLists"].as<std::string>(_nameFormats[NDM_LIST_PILOT]);
+	_nameFormats[NDM_BATTLESCAPE_PRIMARY] = node["nameInBattleScape"].as<std::string>(_nameFormats[NDM_BATTLESCAPE_PRIMARY]);
+	_nameFormats[NDM_BATTLESCAPE_SECONDARY] = node["nameInBattleScapeAlternate"].as<std::string>(_nameFormats[NDM_BATTLESCAPE_SECONDARY]);
+	_nameFormats[NDM_STAT_SEPARATOR] = node["nameStatStringSeparator"].as<std::string>(_nameFormats[NDM_STAT_SEPARATOR]);
+	_nameFormats[NDM_TAG_SEPARATOR] = node["nameTagStatStringSeparator"].as<std::string>(_nameFormats[NDM_TAG_SEPARATOR]);
+	
 	_showTypeInInventory = node["showTypeInInventory"].as<bool>(_showTypeInInventory);
 
 	mod->loadSoundOffset(_type, _deathSoundMale, node["deathMale"], "BATTLE.CAT");
@@ -559,6 +579,11 @@ int RuleSoldier::getRankSpriteBattlescape() const
 int RuleSoldier::getRankSpriteTiny() const
 {
 	return _rankSpriteTiny;
+}
+
+std::map<NameDisplayMode, std::string> RuleSoldier::getNameFormats() const
+{
+	return _nameFormats;
 }
 
 namespace

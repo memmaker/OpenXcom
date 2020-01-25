@@ -185,7 +185,7 @@ void SoldierDiaryOverviewState::init()
 		_soldierId = 0;
 	}
 	_soldier = _list->at(_soldierId);
-	_txtTitle->setText(_soldier->getName());
+	_txtTitle->setText(_soldier->getName(NDM_TITLE));
 
 	if (!_base && _soldier->getDeath())
 	{

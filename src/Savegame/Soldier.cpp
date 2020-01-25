@@ -266,27 +266,70 @@ YAML::Node Soldier::save(const ScriptGlobal *shared) const
 
 /**
  * Returns the soldier's full name (and, optionally, statString).
- * @param statstring Add stat string?
+ * @param displayMode Which display mode and thereby which format string to use.
  * @param maxLength Restrict length to a certain value.
  * @return Soldier name.
  */
-std::string Soldier::getName(bool statstring, unsigned int maxLength) const
+std::string Soldier::getName(NameDisplayMode displayMode, unsigned int maxLength) const
 {
-	if (statstring && !_statString.empty())
-	{
-		if (_name.length() + _statString.length() > maxLength)
-		{
-			return _name.substr(0, maxLength - _statString.length()) + "/" + _statString;
-		}
-		else
-		{
-			return _name + "/" + _statString;
-		}
-	}
-	else
+	if (displayMode == NDM_DEFAULT)
 	{
 		return _name;
 	}
+	
+	auto nameFormats = _rules->getNameFormats();
+	
+	std::string nameFormatted(nameFormats[displayMode]);
+	
+	std::string nameMarker = "{NAME}";
+	std::string callsignMarker = "{CALLSIGN}";
+	std::string statMarker = "{STATSTRING}";
+	std::string tagMarker = "{TAGSTRING}";
+	
+	size_t callsignPos = nameFormatted.find(callsignMarker);
+	if (callsignPos != std::string::npos)
+	{
+		nameFormatted.replace(callsignPos, callsignMarker.length(), _callsign);
+	}
+	
+	size_t statPos = nameFormatted.find(statMarker);
+	if (statPos != std::string::npos)
+	{
+		std::string statString;
+		if (!_statString.empty())
+		{
+			statString = nameFormats[NDM_STAT_SEPARATOR] + _statString;
+		}
+		nameFormatted.replace(statPos, statMarker.length(), statString);
+	}
+	
+	size_t tagPos = nameFormatted.find(tagMarker);
+	if (tagPos != std::string::npos)
+	{
+		std::string tagString;
+		if (!_statTagString.empty())
+		{
+			tagString = nameFormats[NDM_TAG_SEPARATOR] + _statTagString;
+		}
+		nameFormatted.replace(tagPos, tagMarker.length(), tagString);
+	}
+	
+	std::string beforeNameReplace(nameFormatted);
+	size_t namePos = nameFormatted.find(nameMarker);
+	if (namePos != std::string::npos)
+	{
+		nameFormatted.replace(namePos, nameMarker.length(), _name);
+	}
+	
+	if (nameFormatted.length() > maxLength)
+	{
+		size_t lengthDiff = nameFormatted.length() - maxLength;
+		
+		beforeNameReplace.replace(namePos, nameMarker.length(), _name.substr(0, _name.length() - lengthDiff));
+		nameFormatted = beforeNameReplace;
+	}
+	
+	return nameFormatted;
 }
 
 /**
@@ -305,17 +348,13 @@ void Soldier::setName(const std::string &name)
  */
 std::string Soldier::getCallsign(unsigned int maxLength) const
 {
-	std::ostringstream ss;
-	ss << "\"";
-	ss << _callsign;
-	ss << "\"";
-	if (_callsign.length() + 2 > maxLength)
+	if (_callsign.length() > maxLength)
 	{
-		return ss.str().substr(0, maxLength);
+		return _callsign.substr(0, maxLength);
 	}
 	else
 	{
-		return ss.str();
+		return _callsign;
 	}
 }
 
@@ -1103,12 +1142,13 @@ void Soldier::resetDiary()
 
 /**
  * Calculates the soldier's statString
- * Calculates the soldier's statString.
  * @param statStrings List of statString rules.
  * @param psiStrengthEval Are psi stats available?
  */
 void Soldier::calcStatString(const std::vector<StatString *> &statStrings, bool psiStrengthEval)
 {
+	// cache the statstrings for statestrings
+	_globalStatStrings = &statStrings;
 	if (_rules->getStatStrings().empty())
 	{
 		_statString = StatString::calcStatString(_currentStats, statStrings, psiStrengthEval, _psiTraining);
@@ -1116,6 +1156,14 @@ void Soldier::calcStatString(const std::vector<StatString *> &statStrings, bool 
 	else
 	{
 		_statString = StatString::calcStatString(_currentStats, _rules->getStatStrings(), psiStrengthEval, _psiTraining);
+	}
+}
+	
+void Soldier::calcStatTagString(const std::map<std::string, int> &unitTags)
+{
+	if (_globalStatStrings != nullptr && !_globalStatStrings->empty())
+	{
+		_statTagString = StatString::calculateStatString(*_globalStatStrings, unitTags, false);
 	}
 }
 
@@ -1694,7 +1742,7 @@ std::string debugDisplayScript(const Soldier* so)
 		s += "\" id: ";
 		s += std::to_string(so->getId());
 		s += " name: \"";
-		s += so->getName(false, 0);
+		s += so->getName();
 		s += "\")";
 		return s;
 	}

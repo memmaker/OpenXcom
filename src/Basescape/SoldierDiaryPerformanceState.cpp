@@ -239,7 +239,7 @@ void SoldierDiaryPerformanceState::init()
 	_lstMissionTotals->clearList();
 	_commendationsListEntry.clear();
 	_commendationsNames.clear();
-	_txtTitle->setText(_soldier->getName());
+	_txtTitle->setText(_soldier->getName(NDM_TITLE));
 	_lstPerformance->clearList();
 	_lstCommendations->clearList();
 	if (_display == DIARY_KILLS)

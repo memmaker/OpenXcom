@@ -25,6 +25,8 @@
 namespace OpenXcom
 {
 
+enum NameDisplayMode { NDM_DEFAULT, NDM_TITLE, NDM_TITLE_LONG, NDM_LIST, NDM_LIST_LONG, NDM_LIST_PILOT, NDM_BATTLESCAPE_PRIMARY, NDM_BATTLESCAPE_SECONDARY, NDM_STAT_SEPARATOR, NDM_TAG_SEPARATOR };
+
 class Mod;
 class ModScript;
 class SoldierNamePool;
@@ -84,7 +86,7 @@ private:
 	std::vector<std::string> _rankStrings;
 	int _rankSprite, _rankSpriteBattlescape, _rankSpriteTiny;
 	ScriptValues<RuleSoldier> _scriptValues;
-
+	std::map<NameDisplayMode, std::string> _nameFormats;
 	void addSoldierNamePool(const std::string &namFile);
 public:
 	/// Creates a blank soldier ruleset.
@@ -191,6 +193,8 @@ public:
 	int getRankSpriteBattlescape() const;
 	/// Gets the offset of the rank sprite in TinyRanks.
 	int getRankSpriteTiny() const;
+	/// Gets the format strings for the name display
+	std::map<NameDisplayMode, std::string> getNameFormats() const;
 };
 
 }

@@ -69,7 +69,8 @@ BattleUnit::BattleUnit(const Mod *mod, Soldier *soldier, int depth) :
 	_statistics(), _murdererId(0), _mindControllerID(0), _fatalShotSide(SIDE_FRONT), _fatalShotBodyPart(BODYPART_HEAD), _armor(0),
 	_geoscapeSoldier(soldier), _unitRules(0), _rankInt(0), _turretType(-1), _hidingForTurn(false), _floorAbove(false), _respawn(false), _alreadyRespawned(false), _isLeeroyJenkins(false), _summonedPlayerUnit(false), _capturable(true)
 {
-	_name = soldier->getName(true);
+	_mod = mod;
+	_name = soldier->getName();
 	_id = soldier->getId();
 	_type = "SOLDIER";
 	_rank = soldier->getRankString();
@@ -292,7 +293,6 @@ void BattleUnit::prepareUnitSounds()
 			_deathSound = _armor->getFemaleDeathSounds();
 	}
 }
-
 /**
  * Helper function preparing unit response sounds.
  */
@@ -401,6 +401,7 @@ BattleUnit::BattleUnit(const Mod *mod, Unit *unit, UnitFaction faction, int id, 
 	_fatalShotBodyPart(BODYPART_HEAD), _armor(armor), _geoscapeSoldier(0),  _unitRules(unit),
 	_rankInt(0), _turretType(-1), _hidingForTurn(false), _respawn(false), _alreadyRespawned(false), _isLeeroyJenkins(false), _summonedPlayerUnit(false)
 {
+	_mod = mod;
 	if (enviro)
 	{
 		auto newArmor = enviro->getArmorTransformation(_armor);
@@ -3524,16 +3525,34 @@ void BattleUnit::setName(const std::string &name)
 	_name = name;
 }
 
-/**
+std::map<std::string, int> BattleUnit::getUnitTagValues() const {
+	std::map<std::string, int> unitTags;
+	
+	auto tagValues = _scriptValues.getValuesRaw();
+	auto tagData = _mod->getBattleUnitTags();
+	for (size_t i = 0; i < tagValues.size(); ++i)
+	{
+		auto nameAsString = tagData.at(i);
+		int value = tagValues.at(i);
+		unitTags[nameAsString] = value;
+	}
+	return unitTags;
+}
+	
+	/**
  * Get unit's name.
  * An aliens name is the translation of it's race and rank.
  * hence the language pointer needed.
  * @param lang Pointer to language.
  * @param debugAppendId Append unit ID to name for debug purposes.
+ * @param primaryDisplay true means the default name display in the battlescape stats area. false is the state when the area has been right clicked for the alternate name display.
  * @return name String of the unit's name.
  */
-std::string BattleUnit::getName(Language *lang, bool debugAppendId) const
+std::string BattleUnit::getName(Language *lang, bool debugAppendId, bool primaryDisplay) const
 {
+	std::map<std::string, int> unitTags = getUnitTagValues();
+	
+	
 	if (_type != "SOLDIER" && lang != 0)
 	{
 		std::string ret;
@@ -3549,10 +3568,38 @@ std::string BattleUnit::getName(Language *lang, bool debugAppendId) const
 			ss << ret << " " << _id;
 			ret = ss.str();
 		}
+		
+		if (unitTags.size() > 0)
+		{
+			std::string statTagString = StatString::calculateStatString(_mod->getStatStrings(), unitTags, false);
+			if (!statTagString.empty())
+			{
+				ret += ">" + statTagString;
+			}
+		}
+		
 		return ret;
 	}
-
-	return _name;
+	
+	_geoscapeSoldier->calcStatTagString(unitTags);
+	return primaryDisplay ? _geoscapeSoldier->getName(NDM_BATTLESCAPE_PRIMARY, 27) : _geoscapeSoldier->getName(NDM_BATTLESCAPE_SECONDARY, 27);
+}
+	
+std::string BattleUnit::getStatTagString()
+{
+	std::string result;
+	
+	std::map<std::string, int> unitTags = getUnitTagValues();
+	if (unitTags.size() > 0)
+	{
+		auto tagString = StatString::calculateStatString(_mod->getStatStrings(), unitTags, false);
+		if (!tagString.empty())
+		{
+			result = ">" + tagString;
+		}
+	}
+	
+	return result;
 }
 
 /**

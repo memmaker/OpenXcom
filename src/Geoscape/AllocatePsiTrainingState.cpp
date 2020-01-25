@@ -276,12 +276,12 @@ void AllocatePsiTrainingState::initList(size_t scrl)
 		}
 		if ((*s)->isInPsiTraining())
 		{
-			_lstSoldiers->addRow(4, (*s)->getName(true).c_str(), ssStr.str().c_str(), ssSkl.str().c_str(), tr("STR_YES").c_str());
+			_lstSoldiers->addRow(4, (*s)->getName(NDM_LIST_LONG).c_str(), ssStr.str().c_str(), ssSkl.str().c_str(), tr("STR_YES").c_str());
 			_lstSoldiers->setRowColor(row, _lstSoldiers->getSecondaryColor());
 		}
 		else
 		{
-			_lstSoldiers->addRow(4, (*s)->getName(true).c_str(), ssStr.str().c_str(), ssSkl.str().c_str(), tr("STR_NO").c_str());
+			_lstSoldiers->addRow(4, (*s)->getName(NDM_LIST_LONG).c_str(), ssStr.str().c_str(), ssSkl.str().c_str(), tr("STR_NO").c_str());
 			_lstSoldiers->setRowColor(row, _lstSoldiers->getColor());
 		}
 		row++;

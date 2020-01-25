@@ -45,11 +45,17 @@ void StatString::load(const YAML::Node &node)
 {
 	std::string conditionNames[] = {"psiStrength", "psiSkill", "bravery", "strength", "firing", "reactions", "stamina", "tu", "health", "throwing", "melee", "psiTraining", "manaPool"};
 	_stringToBeAddedIfAllConditionsAreMet = node["string"].as<std::string>(_stringToBeAddedIfAllConditionsAreMet);
-	for (size_t i = 0; i < std::size(conditionNames); i++)
+
+	for (auto it = node.begin(); it != node.end(); ++it)
 	{
-		if (node[conditionNames[i]])
+		std::string keyName = it->first.as<std::string>();
+		auto *foo = std::find(std::begin(conditionNames), std::end(conditionNames), keyName);
+		if (keyName.substr(0, 4) == "Tag." || foo != std::end(conditionNames))
 		{
-			_conditions.push_back(getCondition(conditionNames[i], node));
+			if (node[keyName])
+			{
+				_conditions.push_back(getCondition(keyName, node));
+			}
 		}
 	}
 }
@@ -103,21 +109,29 @@ std::string StatString::getString() const
  */
 std::string StatString::calcStatString(UnitStats &currentStats, const std::vector<StatString *> &statStrings, bool psiStrengthEval, bool inTraining)
 {
-	std::string statString;
 	std::map<std::string, int> currentStatsMap = getCurrentStats(currentStats);
+
 	if (inTraining)
 	{
 		currentStatsMap["psiTraining"] = 1;
 	}
+	bool showPsi = currentStats.psiSkill > 0 || psiStrengthEval;
+	
+	return calculateStatString(statStrings, currentStatsMap, showPsi);
+}
+	
+std::string StatString::calculateStatString(const std::vector<StatString *> &statStrings, const std::map<std::string, int> &currentStatsMap, bool showPsi)
+{
+	std::string statString;
 	for (std::vector<StatString *>::const_iterator i = statStrings.begin(); i != statStrings.end(); ++i)
 	{
 		bool conditionsMet = true;
 		for (std::vector<StatStringCondition*>::const_iterator j = (*i)->getConditions().begin(); j != (*i)->getConditions().end() && conditionsMet; ++j)
 		{
-			std::map<std::string, int>::iterator name = currentStatsMap.find((*j)->getConditionName());
+			std::map<std::string, int>::const_iterator name = currentStatsMap.find((*j)->getConditionName());
 			if (name != currentStatsMap.end())
 			{
-				conditionsMet = conditionsMet && (*j)->isMet(name->second, currentStats.psiSkill > 0 || psiStrengthEval);
+				conditionsMet = conditionsMet && (*j)->isMet(name->second, showPsi);
 			}
 			else
 			{

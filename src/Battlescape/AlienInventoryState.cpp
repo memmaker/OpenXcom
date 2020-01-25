@@ -96,7 +96,9 @@ AlienInventoryState::AlienInventoryState(BattleUnit *unit)
 			else
 			{
 				// e.g. Sectoid
-				_txtName->setText(tr(unit->getUnitRules()->getRace()));
+				std::string alienRace = tr(unit->getUnitRules()->getRace());
+				alienRace += unit->getStatTagString();
+				_txtName->setText(alienRace);
 			}
 		}
 		else

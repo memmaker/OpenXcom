@@ -76,7 +76,7 @@ SackSoldierState::SackSoldierState(Base *base, size_t soldierId) : _base(base), 
 	_txtTitle->setText(tr("STR_SACK"));
 
 	std::ostringstream ss;
-	ss << _base->getSoldiers()->at(_soldierId)->getName(true) << "?";
+	ss << _base->getSoldiers()->at(_soldierId)->getName(NDM_TITLE_LONG) << "?";
 
 	_txtSoldier->setAlign(ALIGN_CENTER);
 	_txtSoldier->setText(ss.str());

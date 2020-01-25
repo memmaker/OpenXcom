@@ -1744,14 +1744,10 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		return;
 	}
 
-	_txtName->setText(battleUnit->getName(_game->getLanguage(), false));
+	_txtName->setText(battleUnit->getName(_game->getLanguage(), false, _save->isNameDisplay()));
 	Soldier *soldier = battleUnit->getGeoscapeSoldier();
 	if (soldier != 0)
 	{
-		if (soldier->hasCallsign() && !_save->isNameDisplay())
-		{
-			_txtName->setText(soldier->getCallsign());
-		}
 		// presence of custom background determines what should happen
 		Surface *customBg = _game->getMod()->getSurface("AvatarBackground", false);
 		if (customBg == 0)

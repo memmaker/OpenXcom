@@ -297,7 +297,7 @@ void AllocateTrainingState::initList(size_t scrl)
 			status = tr("STR_NO");
 
 		_lstSoldiers->addRow(9,
-			(*s)->getName(true).c_str(),
+			(*s)->getName(NDM_LIST_LONG).c_str(),
 			tu.str().c_str(),
 			stamina.str().c_str(),
 			health.str().c_str(),

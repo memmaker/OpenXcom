@@ -98,7 +98,7 @@ CommendationLateState::CommendationLateState(std::vector<Soldier*> soldiersMedal
 	for (std::vector<Soldier*>::iterator s = soldiersMedalled.begin() ; s != soldiersMedalled.end(); ++s)
 	{
 		// Establish some base information
-		_lstSoldiers->addRow(3, (*s)->getName().c_str(),
+		_lstSoldiers->addRow(3, (*s)->getName(NDM_LIST).c_str(),
 								tr((*s)->getRankString()).c_str(),
 								tr("STR_KILLS").arg((*s)->getDiary()->getKillTotal()).c_str());
 		_lstSoldiers->setRowColor(row, _lstSoldiers->getSecondaryColor());

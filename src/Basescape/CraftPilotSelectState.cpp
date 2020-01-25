@@ -111,7 +111,7 @@ CraftPilotSelectState::CraftPilotSelectState(Base *base, size_t craft) : _base(b
 				ss2 << (*i)->getStatsWithSoldierBonusesOnly()->reactions;
 				std::ostringstream ss3;
 				ss3 << (*i)->getStatsWithSoldierBonusesOnly()->bravery;
-				_lstPilot->addRow(4, (*i)->getName(false).c_str(), ss1.str().c_str(), ss2.str().c_str(), ss3.str().c_str());
+				_lstPilot->addRow(4, (*i)->getName(NDM_LIST_PILOT).c_str(), ss1.str().c_str(), ss2.str().c_str(), ss3.str().c_str());
 			}
 		}
 	}
