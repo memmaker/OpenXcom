@@ -17,41 +17,37 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenXcom.  If not, see <http:///www.gnu.org/licenses/>.
  */
-#include "../Engine/State.h"
+#include "ActionMenuState.h"
 #include "BattlescapeGame.h"
+
 
 namespace OpenXcom
 {
 
+struct RuleItemUseCost;
+class ActionMenuState;
 class ActionMenuItem;
-
+class EquipmentLayoutItem;
+	
 /**
  * Window that allows the player
  * to select a battlescape action.
  */
-class ActionMenuState : public State
+class SkillMenuState : public ActionMenuState
 {
-protected:
-	BattleAction *_action;
-	ActionMenuItem *_actionMenu[6];
+private:
+	/// Checck if the required commendations for this skill are available
+	bool hasBonus(Soldier *soldier, const RuleSkill *skillRules);
 	/// Adds a new menu item for an action.
 	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key);
-	/// Acts on the action instance that has been chosen and set
-	void handleAction();
+	void chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> compatibleWeaponTypes, bool checkHandsOnly);
 public:
-	ActionMenuState(BattleAction *action);
 	/// Creates the Action Menu state.
-	ActionMenuState(BattleAction *action, int x, int y);
+	SkillMenuState(BattleAction *action, int x, int y);
 	/// Cleans up the Action Menu state.
-	~ActionMenuState();
-	/// Init function.
-	void init() override;
-	/// Handler for right-clicking anything.
-	void handle(Action *action) override;
+	~SkillMenuState();
 	/// Handler for clicking a action menu item.
-	virtual void btnActionMenuItemClick(Action *action);
-	/// Update the resolution settings, we just resized the window.
-	void resize(int &dX, int &dY) override;
+	void btnActionMenuItemClick(Action *action);
 };
 
 }

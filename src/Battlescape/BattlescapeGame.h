@@ -38,6 +38,7 @@ class Pathfinding;
 class Mod;
 class InfoboxOKState;
 class SoldierDiary;
+struct RuleSkill;
 
 enum BattleActionType : Uint8 { BA_NONE, BA_TURN, BA_WALK, BA_KNEEL, BA_PRIME, BA_UNPRIME, BA_THROW, BA_AUTOSHOT, BA_SNAPSHOT, BA_AIMEDSHOT, BA_HIT, BA_USE, BA_LAUNCH, BA_MINDCONTROL, BA_PANIC, BA_RETHINK, BA_CQB };
 enum BattleActionMove { BAM_NORMAL = 0, BAM_RUN = 1, BAM_STRAFE = 2 };
@@ -58,16 +59,16 @@ struct BattleActionCost : RuleItemUseCost
 	BattleActionCost(BattleActionType action, BattleUnit *unit, BattleItem *item) : type(action), actor(unit), weapon(item) { updateTU(); }
 
 	/// Update value of TU based of actor, weapon and type.
-	void updateTU();
+	virtual void updateTU();
 	/// Set TU to zero.
-	void clearTU();
+	virtual void clearTU();
 	/// Test if actor have enough TU to perform weapon action.
-	bool haveTU(std::string *message = 0);
+	virtual bool haveTU(std::string *message = 0);
 	/// Spend TU when actor have enough TU.
-	bool spendTU(std::string *message = 0);
+	virtual bool spendTU(std::string *message = 0);
 };
 
-struct BattleAction : BattleActionCost
+struct BattleAction final : BattleActionCost
 {
 	Position target;
 	std::list<Position> waypoints;
@@ -81,12 +82,16 @@ struct BattleAction : BattleActionCost
 	bool desperate; // ignoring newly-spotted units
 	int finalFacing;
 	bool finalAction;
+	const RuleSkill* skillRules; // if defined, this is a skill action
 	int number; // first action of turn, second, etc.?
 	bool sprayTargeting; // Used to separate waypoint checks between confirm firing mode and the "spray" autoshot
 
 	/// Default constructor
-	BattleAction() : target(-1, -1, -1), targeting(false), value(0), strafe(false), run(false), ignoreSpottedEnemies(false), diff(0), autoShotCounter(0), cameraPosition(0, 0, -1), desperate(false), finalFacing(-1), finalAction(false), number(0), sprayTargeting(false) { }
+	BattleAction() : target(-1, -1, -1), targeting(false), value(0), strafe(false), run(false), ignoreSpottedEnemies(false), diff(0), autoShotCounter(0), cameraPosition(0, 0, -1), desperate(false), finalFacing(-1), finalAction(false), skillRules(nullptr), number(0), sprayTargeting(false) { }
 
+	bool haveTU(std::string *message = 0);
+	void updateTU();
+	
 	/// Get move type
 	BattleActionMove getMoveType() const
 	{
@@ -100,9 +105,10 @@ struct BattleActionAttack
 	BattleUnit *attacker;
 	BattleItem *weapon_item;
 	BattleItem *damage_item;
+	const RuleSkill *skill_rules;
 
 	/// Default constructor.
-	BattleActionAttack(BattleActionType action = BA_NONE, BattleUnit *unit = nullptr) : type{ action }, attacker{ unit }, weapon_item{ nullptr }, damage_item{ nullptr }
+	BattleActionAttack(BattleActionType action = BA_NONE, BattleUnit *unit = nullptr) : type{ action }, attacker{ unit }, weapon_item{ nullptr }, damage_item{ nullptr }, skill_rules{ nullptr }
 	{
 
 	}
@@ -112,6 +118,9 @@ struct BattleActionAttack
 
 	/// Constructor.
 	BattleActionAttack(const BattleActionCost &action, BattleItem *ammo);
+	
+	/// Constructor for skill-based attacks.
+	BattleActionAttack(const BattleAction &action, BattleItem *ammo);
 };
 
 /**

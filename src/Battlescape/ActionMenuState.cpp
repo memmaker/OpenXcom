@@ -40,6 +40,13 @@
 
 namespace OpenXcom
 {
+	
+/**
+ * Default constructor, used by SkillMenuState
+ */
+ActionMenuState::ActionMenuState(BattleAction *action) : _action(action)
+{
+}
 
 /**
  * Initializes all the elements in the Action Menu window.
@@ -256,8 +263,7 @@ void ActionMenuState::btnActionMenuItemClick(Action *action)
 	_game->getSavedGame()->getSavedBattle()->getPathfinding()->removePreview();
 
 	int btnID = -1;
-	const RuleItem *weapon = _action->weapon->getRules();
-
+	
 	// got to find out which button was pressed
 	for (size_t i = 0; i < std::size(_actionMenu) && btnID == -1; ++i)
 	{
@@ -269,102 +275,111 @@ void ActionMenuState::btnActionMenuItemClick(Action *action)
 
 	if (btnID != -1)
 	{
-		bool newHitLog = false;
-		std::string actionResult = "STR_UNKNOWN"; // needs a non-empty default/fall-back !
-
 		_action->type = _actionMenu[btnID]->getAction();
+		_action->skillRules = nullptr;
 		_action->updateTU();
-		if (_action->type != BA_THROW &&
-			_action->actor->getOriginalFaction() == FACTION_PLAYER &&
-			!_game->getSavedGame()->isResearched(weapon->getRequirements()))
+		
+		handleAction();
+	}
+}
+	
+void ActionMenuState::handleAction()
+{
+	const RuleItem *weapon = _action->weapon->getRules();
+	bool newHitLog = false;
+	std::string actionResult = "STR_UNKNOWN"; // needs a non-empty default/fall-back !
+	
+	if (_action->type != BA_THROW &&
+		_action->actor->getOriginalFaction() == FACTION_PLAYER &&
+		!_game->getSavedGame()->isResearched(weapon->getRequirements()))
+	{
+		_action->result = "STR_UNABLE_TO_USE_ALIEN_ARTIFACT_UNTIL_RESEARCHED";
+		_game->popState();
+	}
+	else if (_action->type != BA_THROW &&
+			 !_game->getSavedGame()->getSavedBattle()->canUseWeapon(_action->weapon, _action->actor, false, _action->type, &actionResult))
+	{
+		_action->result = actionResult;
+		_game->popState();
+	}
+	else if (_action->type == BA_PRIME)
+	{
+		const BattleFuseType fuseType = weapon->getFuseTimerType();
+		if (fuseType == BFT_SET)
 		{
-			_action->result = "STR_UNABLE_TO_USE_ALIEN_ARTIFACT_UNTIL_RESEARCHED";
+			_game->pushState(new PrimeGrenadeState(_action, false, 0));
+		}
+		else
+		{
+			_action->value = weapon->getFuseTimerDefault();
 			_game->popState();
 		}
-		else if (_action->type != BA_THROW &&
-			!_game->getSavedGame()->getSavedBattle()->canUseWeapon(_action->weapon, _action->actor, false, _action->type, &actionResult))
+	}
+	else if (_action->type == BA_UNPRIME)
+	{
+		_game->popState();
+	}
+	else if (_action->type == BA_USE && weapon->getBattleType() == BT_MEDIKIT)
+	{
+		BattleUnit *targetUnit = 0;
+		TileEngine *tileEngine = _game->getSavedGame()->getSavedBattle()->getTileEngine();
+		const std::vector<BattleUnit*> *units = _game->getSavedGame()->getSavedBattle()->getUnits();
+		for (std::vector<BattleUnit*>::const_iterator i = units->begin(); i != units->end() && !targetUnit; ++i)
 		{
-			_action->result = actionResult;
-			_game->popState();
-		}
-		else if (_action->type == BA_PRIME)
-		{
-			const BattleFuseType fuseType = weapon->getFuseTimerType();
-			if (fuseType == BFT_SET)
+			// we can heal a unit that is at the same position, unconscious and healable(=woundable)
+			if ((*i)->getPosition() == _action->actor->getPosition() && *i != _action->actor && (*i)->getStatus() == STATUS_UNCONSCIOUS && ((*i)->isWoundable() || weapon->getAllowTargetImmune()) && weapon->getAllowTargetGround())
 			{
-				_game->pushState(new PrimeGrenadeState(_action, false, 0));
-			}
-			else
-			{
-				_action->value = weapon->getFuseTimerDefault();
-				_game->popState();
-			}
-		}
-		else if (_action->type == BA_UNPRIME)
-		{
-			_game->popState();
-		}
-		else if (_action->type == BA_USE && weapon->getBattleType() == BT_MEDIKIT)
-		{
-			BattleUnit *targetUnit = 0;
-			TileEngine *tileEngine = _game->getSavedGame()->getSavedBattle()->getTileEngine();
-			const std::vector<BattleUnit*> *units = _game->getSavedGame()->getSavedBattle()->getUnits();
-			for (std::vector<BattleUnit*>::const_iterator i = units->begin(); i != units->end() && !targetUnit; ++i)
-			{
-				// we can heal a unit that is at the same position, unconscious and healable(=woundable)
-				if ((*i)->getPosition() == _action->actor->getPosition() && *i != _action->actor && (*i)->getStatus() == STATUS_UNCONSCIOUS && ((*i)->isWoundable() || weapon->getAllowTargetImmune()) && weapon->getAllowTargetGround())
+				if ((*i)->getArmor()->getSize() != 1)
 				{
-					if ((*i)->getArmor()->getSize() != 1)
+					// never EVER apply anything to 2x2 units on the ground
+					continue;
+				}
+				if ((weapon->getAllowTargetFriendGround() && (*i)->getOriginalFaction() == FACTION_PLAYER) ||
+					(weapon->getAllowTargetNeutralGround() && (*i)->getOriginalFaction() == FACTION_NEUTRAL) ||
+					(weapon->getAllowTargetHostileGround() && (*i)->getOriginalFaction() == FACTION_HOSTILE))
+				{
+					targetUnit = *i;
+				}
+			}
+		}
+		if (!targetUnit && weapon->getAllowTargetStanding())
+		{
+			if (tileEngine->validMeleeRange(
+											_action->actor->getPosition(),
+											_action->actor->getDirection(),
+											_action->actor,
+											0, &_action->target, false))
+			{
+				Tile *tile = _game->getSavedGame()->getSavedBattle()->getTile(_action->target);
+				if (tile != 0 && tile->getUnit() && (tile->getUnit()->isWoundable() || weapon->getAllowTargetImmune()))
+				{
+					if ((weapon->getAllowTargetFriendStanding() && tile->getUnit()->getOriginalFaction() == FACTION_PLAYER) ||
+						(weapon->getAllowTargetNeutralStanding() && tile->getUnit()->getOriginalFaction() == FACTION_NEUTRAL) ||
+						(weapon->getAllowTargetHostileStanding() && tile->getUnit()->getOriginalFaction() == FACTION_HOSTILE))
 					{
-						// never EVER apply anything to 2x2 units on the ground
-						continue;
-					}
-					if ((weapon->getAllowTargetFriendGround() && (*i)->getOriginalFaction() == FACTION_PLAYER) ||
-						(weapon->getAllowTargetNeutralGround() && (*i)->getOriginalFaction() == FACTION_NEUTRAL) ||
-						(weapon->getAllowTargetHostileGround() && (*i)->getOriginalFaction() == FACTION_HOSTILE))
-					{
-						targetUnit = *i;
+						targetUnit = tile->getUnit();
 					}
 				}
 			}
-			if (!targetUnit && weapon->getAllowTargetStanding())
+		}
+		if (!targetUnit && weapon->getAllowTargetSelf())
+		{
+			targetUnit = _action->actor;
+		}
+		if (targetUnit)
+		{
+			_game->popState();
+			BattleMediKitType type = weapon->getMediKitType();
+			if (type)
 			{
-				if (tileEngine->validMeleeRange(
-					_action->actor->getPosition(),
-					_action->actor->getDirection(),
-					_action->actor,
-					0, &_action->target, false))
+				if ((type == BMT_HEAL && _action->weapon->getHealQuantity() > 0) ||
+					(type == BMT_STIMULANT && _action->weapon->getStimulantQuantity() > 0) ||
+					(type == BMT_PAINKILLER && _action->weapon->getPainKillerQuantity() > 0))
 				{
-					Tile *tile = _game->getSavedGame()->getSavedBattle()->getTile(_action->target);
-					if (tile != 0 && tile->getUnit() && (tile->getUnit()->isWoundable() || weapon->getAllowTargetImmune()))
+					if (_action->spendTU(&_action->result))
 					{
-						if ((weapon->getAllowTargetFriendStanding() && tile->getUnit()->getOriginalFaction() == FACTION_PLAYER) ||
-							(weapon->getAllowTargetNeutralStanding() && tile->getUnit()->getOriginalFaction() == FACTION_NEUTRAL) ||
-							(weapon->getAllowTargetHostileStanding() && tile->getUnit()->getOriginalFaction() == FACTION_HOSTILE))
+						switch (type)
 						{
-							targetUnit = tile->getUnit();
-						}
-					}
-				}
-			}
-			if (!targetUnit && weapon->getAllowTargetSelf())
-			{
-				targetUnit = _action->actor;
-			}
-			if (targetUnit)
-			{
-				_game->popState();
-				BattleMediKitType type = weapon->getMediKitType();
-				if (type)
-				{
-					if ((type == BMT_HEAL && _action->weapon->getHealQuantity() > 0) ||
-						(type == BMT_STIMULANT && _action->weapon->getStimulantQuantity() > 0) ||
-						(type == BMT_PAINKILLER && _action->weapon->getPainKillerQuantity() > 0))
-					{
-						if (_action->spendTU(&_action->result))
-						{
-							switch (type)
-							{
 							case BMT_HEAL:
 								if (targetUnit->getFatalWounds())
 								{
@@ -394,90 +409,89 @@ void ActionMenuState::btnActionMenuItemClick(Action *action)
 								break;
 							case BMT_NORMAL:
 								break;
-							}
 						}
-					}
-					else
-					{
-						_action->result = "STR_NO_USES_LEFT";
 					}
 				}
 				else
 				{
-					_game->pushState(new MedikitState(targetUnit, _action, tileEngine));
+					_action->result = "STR_NO_USES_LEFT";
 				}
 			}
 			else
 			{
-				_action->result = "STR_THERE_IS_NO_ONE_THERE";
-				_game->popState();
+				_game->pushState(new MedikitState(targetUnit, _action, tileEngine));
 			}
 		}
-		else if (_action->type == BA_USE && weapon->getBattleType() == BT_SCANNER)
+		else
 		{
-			// spend TUs first, then show the scanner
-			if (_action->spendTU(&_action->result))
-			{
-				_game->popState();
-				_game->pushState (new ScannerState(_action));
-			}
-			else
-			{
-				_game->popState();
-			}
-		}
-		else if (_action->type == BA_LAUNCH)
-		{
-			// check beforehand if we have enough time units
-			if (!_action->haveTU(&_action->result))
-			{
-				//nothing
-			}
-			else if (!_action->weapon->getAmmoForAction(BA_LAUNCH, &_action->result))
-			{
-				//nothing
-			}
-			else
-			{
-				_action->targeting = true;
-				newHitLog = true;
-			}
+			_action->result = "STR_THERE_IS_NO_ONE_THERE";
 			_game->popState();
 		}
-		else if (_action->type == BA_HIT)
+	}
+	else if (_action->type == BA_USE && weapon->getBattleType() == BT_SCANNER)
+	{
+		// spend TUs first, then show the scanner
+		if (_action->spendTU(&_action->result))
 		{
-			// check beforehand if we have enough time units
-			if (!_action->haveTU(&_action->result))
-			{
-				//nothing
-			}
-			else if (!_game->getSavedGame()->getSavedBattle()->getTileEngine()->validMeleeRange(
-				_action->actor->getPosition(),
-				_action->actor->getDirection(),
-				_action->actor,
-				0, &_action->target))
-			{
-				_action->result = "STR_THERE_IS_NO_ONE_THERE";
-			}
-			else
-			{
-				newHitLog = true;
-			}
 			_game->popState();
+			_game->pushState (new ScannerState(_action));
+		}
+		else
+		{
+			_game->popState();
+		}
+	}
+	else if (_action->type == BA_LAUNCH)
+	{
+		// check beforehand if we have enough time units
+		if (!_action->haveTU(&_action->result))
+		{
+			//nothing
+		}
+		else if (!_action->weapon->getAmmoForAction(BA_LAUNCH, &_action->result))
+		{
+			//nothing
 		}
 		else
 		{
 			_action->targeting = true;
 			newHitLog = true;
-			_game->popState();
 		}
-
-		if (newHitLog)
-		{
-			_game->getSavedGame()->getSavedBattle()->appendToHitLog(HITLOG_PLAYER_FIRING, FACTION_PLAYER, tr(weapon->getType()));
-		}
+		_game->popState();
 	}
-}
+	else if (_action->type == BA_HIT)
+	{
+		// check beforehand if we have enough time units
+		if (!_action->haveTU(&_action->result))
+		{
+			//nothing
+		}
+		else if (!_game->getSavedGame()->getSavedBattle()->getTileEngine()->validMeleeRange(
+																							_action->actor->getPosition(),
+																							_action->actor->getDirection(),
+																							_action->actor,
+																							0, &_action->target))
+		{
+			_action->result = "STR_THERE_IS_NO_ONE_THERE";
+		}
+		else
+		{
+			newHitLog = true;
+		}
+		_game->popState();
+	}
+	else
+	{
+		_action->targeting = true;
+		newHitLog = true;
+		_game->popState();
+	}
+	
+	if (newHitLog)
+	{
+		_game->getSavedGame()->getSavedBattle()->appendToHitLog(HITLOG_PLAYER_FIRING, FACTION_PLAYER, tr(weapon->getType()));
+	}
+	}
 
 /**
  * Updates the scale.

@@ -12,6 +12,8 @@ en-US:
 #=================== Battlescape ===================
 #InventoryState.cpp
   STR_PSI_SHORT: "PSI>{ALT}{0}/{1}"
+#SkillMenuState.cpp
+  STR_MANA_SHORT: "MA>{ALT}{0}"
 #=================== Geoscape ===================
 #DogfightState.cpp
   STR_EVASIVE_MANEUVERS: "EVASIVE MANEUVERS"

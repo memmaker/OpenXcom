@@ -41,7 +41,7 @@ RuleSoldier::RuleSoldier(const std::string &type) : _type(type), _listOrder(0), 
 	_standHeight(0), _kneelHeight(0), _floatHeight(0), _femaleFrequency(50), _value(20), _transferTime(0), _moraleLossWhenKilled(100),
 	_avatarOffsetX(67), _avatarOffsetY(48), _flagOffset(0),
 	_allowPromotion(true), _allowPiloting(true), _showTypeInInventory(false),
-	_rankSprite(42), _rankSpriteBattlescape(20), _rankSpriteTiny(0)
+	_rankSprite(42), _rankSpriteBattlescape(20), _rankSpriteTiny(0), _skillIconSprite(1)
 {
 }
 
@@ -178,16 +178,50 @@ void RuleSoldier::load(const YAML::Node &node, Mod *mod, int listOrder, const Mo
 	mod->loadSpriteOffset(_type, _rankSprite, node["rankSprite"], "BASEBITS.PCK");
 	mod->loadSpriteOffset(_type, _rankSpriteBattlescape, node["rankBattleSprite"], "SMOKE.PCK");
 	mod->loadSpriteOffset(_type, _rankSpriteTiny, node["rankTinySprite"], "TinyRanks");
-
+	mod->loadSpriteOffset(_type, _skillIconSprite, node["skillIconSprite"], "SPICONS.DAT");
+	
 	_listOrder = node["listOrder"].as<int>(_listOrder);
 	if (!_listOrder)
 	{
 		_listOrder = listOrder;
 	}
+	
+	auto loadSkillActionConf = [&](int offset, const YAML::Node &n)
+	{
+		if (n)
+		{
+			RuleSkill *skill = new RuleSkill(offset);
+			
+			loadCost(skill->Cost, n, "Use");
+			loadPercent(skill->Flat, n, "Use");
+			
+			skill->Name = n["name"].as<std::string>(skill->Name);
+			skill->RequiredBonus = node["requiredBonus"].as<std::vector<std::string>>(skill->RequiredBonus);
+			int targetMode = n["targetMode"].as<int>(skill->TargetMode);
+			targetMode = targetMode < 0 ? 0 : targetMode;
+			targetMode = targetMode > BA_CQB ? 0 : targetMode;
+			skill->TargetMode = static_cast<BattleActionType>(targetMode);
+			skill->IsPsiRequired = n["isPsiRequired"].as<bool>(skill->IsPsiRequired);
+			skill->CheckHandsOnly = n["checkHandsOnly"].as<bool>(skill->CheckHandsOnly);
+			skill->CompatibleWeapons = n["compatibleWeapons"].as<std::vector<std::string>>(skill->CompatibleWeapons);
+			_skills.push_back(skill);
+		}
+	};
+	
+	if (const YAML::Node &nodeSkills = node["skills"])
+	{
+		for (int slot = 0; slot < 5; ++slot)
+		{
+			const YAML::Node currentNode = nodeSkills[std::to_string(slot)];
+			loadSkillActionConf(slot, currentNode);
+		}
+	}
 
 	_scriptValues.load(node, parsers.getShared());
 }
 
+
+	
 /**
  * Cross link with other Rules.
  */
@@ -313,6 +347,33 @@ int RuleSoldier::getBuyCost() const
 bool RuleSoldier::isSalaryDynamic() const
 {
 	return _costSalarySquaddie || _costSalarySergeant || _costSalaryCaptain || _costSalaryColonel || _costSalaryCommander;
+}
+	
+/**
+ * Is a skill menu defined?
+ * @return True if a skill menu has been defined, false otherwise.
+ */
+bool RuleSoldier::isSkillMenuDefined() const
+{
+	return _skills.size() > 0;
+}
+
+/**
+ * Gets the list of defined skills.
+ * @return The list of defined skills.
+ */
+const std::vector<const RuleSkill*> RuleSoldier::getSkills() const
+{
+	return _skills;
+}
+
+/**
+ * Gets the sprite index into SPICONS for the skill icon sprite.
+ *
+ */
+int RuleSoldier::getSkillIconSprite() const
+{
+	return _skillIconSprite;
 }
 
 /**
@@ -581,6 +642,91 @@ std::string debugDisplayScript(const RuleSoldier* rs)
 	}
 }
 
+}
+
+/**
+ * Load item use cost.
+ * @param a Item use cost.
+ * @param node YAML node.
+ * @param name Name of action type.
+ */
+void RuleSoldier::loadCost(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const
+{
+	loadInt(a.Time, node["tu" + name]);
+	if (const YAML::Node& cost = node["cost" + name])
+	{
+		loadInt(a.Time, cost["time"]);
+		loadInt(a.Energy, cost["energy"]);
+		loadInt(a.Morale, cost["morale"]);
+		loadInt(a.Health, cost["health"]);
+		loadInt(a.Stun, cost["stun"]);
+		loadInt(a.Mana, cost["mana"]);
+	}
+}
+
+/**
+ * Load skill use cost type (flat or percent).
+ * @param a Item use type.
+ * @param node YAML node.
+ * @param name Name of action type.
+ */
+void RuleSoldier::loadPercent(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const
+{
+	if (const YAML::Node& cost = node["flat" + name])
+	{
+		if (cost.IsScalar())
+		{
+			loadTriBool(a.Time, cost);
+		}
+		else
+		{
+			loadTriBool(a.Time, cost["time"]);
+			loadTriBool(a.Energy, cost["energy"]);
+			loadTriBool(a.Morale, cost["morale"]);
+			loadTriBool(a.Health, cost["health"]);
+			loadTriBool(a.Stun, cost["stun"]);
+			loadTriBool(a.Mana, cost["mana"]);
+		}
+	}
+}
+
+/**
+ * Load nullable bool value and store it in int (with null as -1).
+ * @param a value to set.
+ * @param node YAML node.
+ */
+void RuleSoldier::loadTriBool(int& a, const YAML::Node& node) const
+{
+	if (node)
+	{
+		if (node.IsNull())
+		{
+			a = -1;
+		}
+		else
+		{
+			a = node.as<bool>();
+		}
+	}
+}
+/**
+ * Load nullable int (with null as -1).
+ * @param a value to set.
+ * @param node YAML node.
+ */
+void RuleSoldier::loadInt(int& a, const YAML::Node& node) const
+{
+	if (node)
+	{
+		if (node.IsNull())
+		{
+			a = -1;
+		}
+		else
+		{
+			a = node.as<int>();
+		}
+	}
 }
 
 /**

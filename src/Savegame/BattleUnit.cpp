@@ -1448,9 +1448,11 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 	const int orgDamage = damage;
 	const int overKillMinimum = type->IgnoreOverKill ? 0 : -4 * _stats.health;
 
+	const int skillId = attack.skill_rules ? attack.skill_rules->Id : -1;
+	
 	{
 		ModScript::HitUnit::Output args { damage, bodypart, side, };
-		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, orgDamage, type->ResistType, attack.type, };
+		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, orgDamage, type->ResistType, attack.type, skillId };
 
 		work.execute(this->getArmor()->getScript<ModScript::HitUnit>(), args);
 
@@ -1703,6 +1705,30 @@ RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const Batt
 	return getActionTUs(actionType, item->getRules());
 }
 
+/**
+ * Get the number of time units a certain skill action takes.
+ * @param actionType
+ * @param skillRules
+ * @return TUs
+ */
+RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const RuleSkill *skillRules) const
+{
+	if (skillRules == 0)
+	{
+		return 0;
+	}
+	RuleItemUseCost cost(skillRules->Cost);
+	applyPercentages(cost, skillRules->Flat);
+	
+	return cost;
+}
+
+/**
+ * Get the number of time units a certain action takes.
+ * @param actionType
+ * @param item
+ * @return TUs
+ */
 RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const RuleItem *item) const
 {
 	RuleItemUseCost cost;
@@ -1752,39 +1778,43 @@ RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const Rule
 			default:
 				break;
 		}
-
+		
 		// if it's a percentage, apply it to unit TUs
-		if (!flat.Time && cost.Time)
-		{
-			cost.Time = std::max(1, (int)floor(getBaseStats()->tu * cost.Time / 100.0f));
-		}
-		// if it's a percentage, apply it to unit Energy
-		if (!flat.Energy && cost.Energy)
-		{
-			cost.Energy = std::max(1, (int)floor(getBaseStats()->stamina * cost.Energy / 100.0f));
-		}
-		// if it's a percentage, apply it to unit Morale
-		if (!flat.Morale && cost.Morale)
-		{
-			cost.Morale = std::max(1, (int)floor((110 - getBaseStats()->bravery) * cost.Morale / 100.0f));
-		}
-		// if it's a percentage, apply it to unit Health
-		if (!flat.Health && cost.Health)
-		{
-			cost.Health = std::max(1, (int)floor(getBaseStats()->health * cost.Health / 100.0f));
-		}
-		// if it's a percentage, apply it to unit Health
-		if (!flat.Stun && cost.Stun)
-		{
-			cost.Stun = std::max(1, (int)floor(getBaseStats()->health * cost.Stun / 100.0f));
-		}
-		// if it's a percentage, apply it to unit Mana
-		if (!flat.Mana && cost.Mana)
-		{
-			cost.Mana = std::max(1, (int)floor(getBaseStats()->mana * cost.Mana / 100.0f));
-		}
+		applyPercentages(cost, flat);
 	}
 	return cost;
+}
+	
+void BattleUnit::applyPercentages(RuleItemUseCost &cost, const RuleItemUseCost &flat) const {
+	if (!flat.Time && cost.Time)
+	{
+		cost.Time = std::max(1, (int)floor(getBaseStats()->tu * cost.Time / 100.0f));
+	}
+	// if it's a percentage, apply it to unit Energy
+	if (!flat.Energy && cost.Energy)
+	{
+		cost.Energy = std::max(1, (int)floor(getBaseStats()->stamina * cost.Energy / 100.0f));
+	}
+	// if it's a percentage, apply it to unit Morale
+	if (!flat.Morale && cost.Morale)
+	{
+		cost.Morale = std::max(1, (int)floor((110 - getBaseStats()->bravery) * cost.Morale / 100.0f));
+	}
+	// if it's a percentage, apply it to unit Health
+	if (!flat.Health && cost.Health)
+	{
+		cost.Health = std::max(1, (int)floor(getBaseStats()->health * cost.Health / 100.0f));
+	}
+	// if it's a percentage, apply it to unit Health
+	if (!flat.Stun && cost.Stun)
+	{
+		cost.Stun = std::max(1, (int)floor(getBaseStats()->health * cost.Stun / 100.0f));
+	}
+	// if it's a percentage, apply it to unit Mana
+	if (!flat.Mana && cost.Mana)
+	{
+		cost.Mana = std::max(1, (int)floor(getBaseStats()->mana * cost.Mana / 100.0f));
+	}
 }
 
 /**
@@ -4404,7 +4434,7 @@ void BattleUnit::setSpecialWeapon(SavedBattleGame *save)
 }
 
 /**
- * Get special weapon.
+ * Get special weapon by battletype.
  */
 BattleItem *BattleUnit::getSpecialWeapon(BattleType type) const
 {
@@ -4415,6 +4445,26 @@ BattleItem *BattleUnit::getSpecialWeapon(BattleType type) const
 			break;
 		}
 		if (_specWeapon[i]->getRules()->getBattleType() == type)
+		{
+			return _specWeapon[i];
+		}
+	}
+	return 0;
+}
+
+
+/**
+ * Get special weapon by type.
+ */
+BattleItem *BattleUnit::getSpecialWeapon(std::string weaponType) const
+{
+	for (int i = 0; i < SPEC_WEAPON_MAX; ++i)
+	{
+		if (!_specWeapon[i])
+		{
+			break;
+		}
+		if (_specWeapon[i]->getRules()->getType() == weaponType)
 		{
 			return _specWeapon[i];
 		}
@@ -5418,13 +5468,33 @@ ModScript::HitUnitParser::HitUnitParser(ScriptGlobal* shared, const std::string&
 	"part",
 	"side",
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "orig_power", "damaging_type", "battle_action", }
+	"battle_game", "orig_power", "damaging_type", "battle_action", "skill_id" }
 {
 	BindBase b { this };
 
 	b.addCustomPtr<const Mod>("rules", mod);
 
 	battleActionImpl(b);
+}
+
+ModScript::SkillUseUnitParser::SkillUseUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod) : ScriptParserEvents { shared, name,
+	"continue_action",
+	"spend_tu",
+	"actor",
+	"item",
+	"battle_game",
+	"battle_action",
+	"skill_id",
+	"have_tu"
+}
+{
+	BindBase b { this };
+	
+	b.addCustomPtr<const Mod>("rules", mod);
+	
+	battleActionImpl(b);
+	
+	setEmptyReturn();
 }
 
 ModScript::HealUnitParser::HealUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod) : ScriptParserEvents{ shared, name,

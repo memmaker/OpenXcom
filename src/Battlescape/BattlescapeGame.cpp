@@ -81,11 +81,93 @@ void BattleActionCost::updateTU()
 }
 
 /**
+ * Update value of TU and Energy
+ */
+void BattleAction::updateTU()
+{
+	if (!skillRules)
+	{
+		return BattleActionCost::updateTU();
+	}
+	if (actor && skillRules)
+	{
+		*(RuleItemUseCost*)this = actor->getActionTUs(type, skillRules);
+	}
+	else
+	{
+		clearTU();
+	}
+}
+
+/**
  * Clean up action cost.
  */
 void BattleActionCost::clearTU()
 {
 	*(RuleItemUseCost*)this = RuleItemUseCost();
+}
+
+/**
+ * Test if skill action can by performed.
+ * @param message optional message with error condition.
+ * @return Unit have enough stats to perform action.
+ */
+bool BattleAction::haveTU(std::string *message)
+{
+	if (!skillRules)
+	{
+		return BattleActionCost::haveTU(message);
+	}
+	
+	if (actor->getTimeUnits() < Time)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_TIME_UNITS";
+		}
+		return false;
+	}
+	if (actor->getEnergy() < Energy)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_ENERGY";
+		}
+		return false;
+	}
+	if (actor->getMorale() < Morale)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_MORALE";
+		}
+		return false;
+	}
+	if (actor->getHealth() <= Health)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_HEALTH";
+		}
+		return false;
+	}
+	if (actor->getMana() < Mana)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_MANA";
+		}
+		return false;
+	}
+	if (actor->getHealth() - actor->getStunlevel() <= Stun + Health)
+	{
+		if (message)
+		{
+			*message = "STR_NOT_ENOUGH_STUN";
+		}
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -150,7 +232,7 @@ bool BattleActionCost::haveTU(std::string *message)
 	}
 	return true;
 }
-
+	
 /**
  * Spend cost of action if unit have enough stats.
  * @param message optional message with error condition.
@@ -198,6 +280,11 @@ BattleActionAttack::BattleActionAttack(const BattleActionCost& action, BattleIte
 
 }
 
+BattleActionAttack::BattleActionAttack(const BattleAction &action, BattleItem *ammo) : BattleActionAttack{ action.type, action.actor, action.weapon, ammo }
+{
+	skill_rules = action.skillRules;
+}
+
 /**
  * Initializes all the elements in the Battlescape screen.
  * @param save Pointer to the save game.
@@ -209,6 +296,7 @@ BattlescapeGame::BattlescapeGame(SavedBattleGame *save, BattlescapeState *parent
 	_currentAction.actor = 0;
 	_currentAction.targeting = false;
 	_currentAction.type = BA_NONE;
+	_currentAction.skillRules = nullptr;
 
 	_debugPlay = false;
 
@@ -510,6 +598,7 @@ void BattlescapeGame::endTurn()
 {
 	_debugPlay = false;
 	_currentAction.type = BA_NONE;
+	_currentAction.skillRules = nullptr;
 	getMap()->getWaypoints()->clear();
 	_currentAction.waypoints.clear();
 	_parentState->showLaunchButton(false);
@@ -964,17 +1053,24 @@ void BattlescapeGame::checkForCasualties(const RuleDamageType *damageType, Battl
 	BattleUnit *bu = _save->getSelectedUnit();
 	if (_save->getSide() == FACTION_PLAYER)
 	{
-		_parentState->showPsiButton(bu && bu->getSpecialWeapon(BT_PSIAMP) && !bu->isOut());
-		_parentState->showSpecialButton(false);
-
 		if (bu && !bu->isOut())
 		{
+			if (bu->getSpecialWeapon(BT_PSIAMP))
+			{
+				_parentState->showPsiButton(true);
+				_parentState->showSpecialButton(false);
+				_parentState->showSkillsButton(false);
+			}
+
 			BattleType type = BT_NONE;
 			BattleItem *specialWeapon = bu->getSpecialIconWeapon(type); // updates type!
-			if (specialWeapon && type != BT_NONE && type != BT_AMMO && type != BT_GRENADE && type != BT_PROXIMITYGRENADE && type != BT_FLARE && type != BT_CORPSE)
+			bool hasSpecialWeapon = specialWeapon && type != BT_NONE && type != BT_AMMO && type != BT_GRENADE && type != BT_PROXIMITYGRENADE && type != BT_FLARE && type != BT_CORPSE;
+			
+			if (hasSpecialWeapon)
 			{
 				_parentState->showPsiButton(false);
 				_parentState->showSpecialButton(true, specialWeapon->getRules()->getSpecialIconSprite());
+				_parentState->showSkillsButton(false);
 			}
 		}
 	}
@@ -1069,7 +1165,6 @@ void BattlescapeGame::handleNonTargetAction()
 		_currentAction.type = BA_NONE;
 		_parentState->updateSoldierInfo();
 	}
-
 	setupCursor();
 }
 
@@ -1646,6 +1741,7 @@ bool BattlescapeGame::cancelCurrentAction(bool bForce)
 				}
 				_currentAction.targeting = false;
 				_currentAction.type = BA_NONE;
+				_currentAction.skillRules = nullptr;
 				setupCursor();
 				_parentState->getGame()->getCursor()->setVisible(true);
 				return true;
@@ -1674,6 +1770,7 @@ void BattlescapeGame::cancelAllActions()
 
 	_currentAction.targeting = false;
 	_currentAction.type = BA_NONE;
+	_currentAction.skillRules = nullptr;
 	setupCursor();
 	_parentState->getGame()->getCursor()->setVisible(true);
 }
@@ -2116,6 +2213,7 @@ BattleUnit *BattlescapeGame::convertUnit(BattleUnit *unit)
 
 	getSave()->getBattleState()->showPsiButton(false);
 	getSave()->getBattleState()->showSpecialButton(false);
+	getSave()->getBattleState()->showSkillsButton(false);
 	// in case the unit was unconscious
 	getSave()->removeUnconsciousBodyItem(unit);
 

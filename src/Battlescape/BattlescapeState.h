@@ -52,7 +52,7 @@ private:
 	Map *_map;
 	BattlescapeButton *_btnUnitUp, *_btnUnitDown, *_btnMapUp, *_btnMapDown, *_btnShowMap, *_btnKneel;
 	BattlescapeButton *_btnInventory, *_btnCenter, *_btnNextSoldier, *_btnNextStop, *_btnShowLayers, *_btnHelp;
-	BattlescapeButton *_btnEndTurn, *_btnAbort, *_btnLaunch, *_btnPsi, *_btnSpecial, *_reserve;
+	BattlescapeButton *_btnEndTurn, *_btnAbort, *_btnLaunch, *_btnPsi, *_btnSpecial, *_btnSkills, *_reserve;
 	InteractiveSurface *_btnStats;
 	BattlescapeButton *_btnReserveNone, *_btnReserveSnap, *_btnReserveAimed, *_btnReserveAuto, *_btnReserveKneel, *_btnZeroTUs;
 	InteractiveSurface *_btnLeftHandItem, *_btnRightHandItem;
@@ -175,6 +175,8 @@ public:
 	void btnPsiClick(Action *action);
 	/// Handler for clicking the use special weapon button.
 	void btnSpecialClick(Action *action);
+	/// Handler for clicking the skills menu button.
+	void btnSkillsClick(Action *action);
 	/// Handler for clicking a reserved button.
 	void btnReserveClick(Action *action);
 	/// Handler for clicking the reload button.
@@ -219,6 +221,8 @@ public:
 	void showPsiButton(bool show);
 	/// Shows the special weapon button.
 	void showSpecialButton(bool show, int sprite = 1);
+	/// Shows the skills menu button.
+	void showSkillsButton(bool show, int sprite = 1);
 	/// Clears mouse-scrolling state.
 	void clearMouseScrollingState();
 	/// Returns a pointer to the battlegame, in case we need its functions.

@@ -21,15 +21,38 @@
 #include <yaml-cpp/yaml.h>
 #include "Unit.h"
 #include "../Engine/Script.h"
+#include "../Mod/RuleItem.h"
+#include "../Battlescape/BattlescapeGame.h"
 
 namespace OpenXcom
 {
 
+enum BattleActionType : Uint8;
 class Mod;
 class ModScript;
 class SoldierNamePool;
 class StatString;
-class RuleItem;
+
+struct RuleSkill
+{
+	std::string Name;
+	RuleItemUseCost Cost;
+	RuleItemUseCost Flat;
+	BattleActionType TargetMode;
+	std::vector<std::string> CompatibleWeapons;
+	std::vector<std::string> RequiredBonus;
+	bool IsPsiRequired;
+	
+	bool CheckHandsOnly;
+	const int Id;
+	
+	/// Default constructor.
+	RuleSkill(int index) : Name("STR_SKILL_USE"), TargetMode(BA_NONE), IsPsiRequired(false), CheckHandsOnly(true), Id(index)
+	{
+		CompatibleWeapons = {};
+		RequiredBonus = {};
+	}
+};
 
 /**
  * Represents the creation data for an X-COM unit.
@@ -52,6 +75,8 @@ public:
 	static constexpr int LookVariantMask = LookVariantMax - 1;
 	/// Mask for all possible looks types for soldier.
 	static constexpr int LookTotalMask = (1 << (LookVariantBits + LookBaseBits + LookGenderBits)) - 1;
+	/// Max number of skill slots
+	static constexpr int SkillSlotsMax = 5;
 
 	/// Name of class used in script.
 	static constexpr const char *ScriptName = "RuleSoldier";
@@ -82,9 +107,10 @@ private:
 	bool _allowPromotion, _allowPiloting, _showTypeInInventory;
 	std::vector<StatString*> _statStrings;
 	std::vector<std::string> _rankStrings;
-	int _rankSprite, _rankSpriteBattlescape, _rankSpriteTiny;
+	int _rankSprite, _rankSpriteBattlescape, _rankSpriteTiny, _skillIconSprite;
 	ScriptValues<RuleSoldier> _scriptValues;
-
+	
+	std::vector<const RuleSkill*> _skills;
 	void addSoldierNamePool(const std::string &namFile);
 public:
 	/// Creates a blank soldier ruleset.
@@ -119,6 +145,12 @@ public:
 	int getBuyCost() const;
 	/// Does salary depend on rank?
 	bool isSalaryDynamic() const;
+	/// Has the soldier type a skill menu defined?
+	bool isSkillMenuDefined() const;
+	/// Returns the skill definition at the specified index
+	const std::vector<const RuleSkill*> getSkills() const;
+	/// Return the sprite index for the skill icon sprite.
+	int getSkillIconSprite() const;
 	/// Gets the monthly salary of the soldier (for a given rank).
 	int getSalaryCost(int rank) const;
 	/// Gets the height of the soldier when it's standing.
@@ -191,6 +223,14 @@ public:
 	int getRankSpriteBattlescape() const;
 	/// Gets the offset of the rank sprite in TinyRanks.
 	int getRankSpriteTiny() const;
+	/// Load int from yaml.
+	void loadInt(int& a, const YAML::Node& node) const;
+	/// Load RuleItemUseCost from yaml.
+	void loadCost(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const;
+	/// Load extended cost definition from yaml.
+	void loadPercent(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const;
+	/// Load a nullable bool from yaml.
+	void loadTriBool(int& a, const YAML::Node& node) const;
 };
 
 }

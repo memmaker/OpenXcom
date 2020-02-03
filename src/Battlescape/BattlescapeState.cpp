@@ -26,6 +26,7 @@
 #include "AbortMissionState.h"
 #include "TileEngine.h"
 #include "ActionMenuState.h"
+#include "SkillMenuState.h"
 #include "UnitInfoState.h"
 #include "InventoryState.h"
 #include "AlienInventoryState.h"
@@ -190,7 +191,8 @@ BattlescapeState::BattlescapeState() :
 	_btnPsi->setVisible(false);
 	_btnSpecial = new BattlescapeButton(32, 24, screenWidth - 32, 25); // we need screenWidth, because that is independent of the black bars on the screen
 	_btnSpecial->setVisible(false);
-
+	_btnSkills = new BattlescapeButton(32, 24, screenWidth - 32, 25); // we need screenWidth, because that is independent of the black bars on the screen
+	_btnSkills->setVisible(false);
 	// Create soldier stats summary
 	_rankTiny = new Surface(7, 7, x + 135, y + 33);
 	_txtName = new Text(136, 10, x + 135, y + 32);
@@ -350,6 +352,8 @@ BattlescapeState::BattlescapeState() :
 	_game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(1)->blitNShade(_btnPsi, 0, 0);
 	add(_btnSpecial);
 	_game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(1)->blitNShade(_btnSpecial, 0, 0); // use psi button for default
+	add(_btnSkills);
+	_game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(1)->blitNShade(_btnSkills, 0, 0); // use psi button for default
 
 	// Set up objects
 	_save = _game->getSavedGame()->getSavedBattle();
@@ -586,7 +590,10 @@ BattlescapeState::BattlescapeState() :
 	_btnSpecial->setTooltip("STR_USE_SPECIAL_ITEM");
 	_btnSpecial->onMouseIn((ActionHandler)&BattlescapeState::txtTooltipInExtraSpecial);
 	_btnSpecial->onMouseOut((ActionHandler)&BattlescapeState::txtTooltipOut);
-
+	
+	_btnSkills->onMouseClick((ActionHandler)&BattlescapeState::btnSkillsClick);
+	_btnSkills->onKeyboardPress((ActionHandler)&BattlescapeState::btnSkillsClick, Options::keyBattleUseSpecial);
+	
 	_txtName->setHighContrast(true);
 
 	_barTimeUnits->setScale(1.0);
@@ -1520,12 +1527,29 @@ void BattlescapeState::btnSpecialClick(Action *action)
 		BattleItem *specialItem = _save->getSelectedUnit()->getSpecialIconWeapon(type);
 		if (!specialItem)
 		{
+			if (_btnSkills->getVisible())
+			{
+				btnSkillsClick(action);
+			}
 			return;
 		}
 
 		_map->draw();
 		bool middleClick = action->getDetails()->button.button == SDL_BUTTON_MIDDLE;
 		handleItemClick(specialItem, middleClick);
+	}
+	action->getDetails()->type = SDL_NOEVENT; // consume the event
+}
+	
+/**
+ * Shows action menu for the skills feature.
+ * @param action Pointer to an action.
+ */
+void BattlescapeState::btnSkillsClick(Action *action)
+{
+	if (playableUnitSelected() && !_battleGame->isBusy())
+	{
+		popup(new SkillMenuState(_battleGame->getCurrentAction(), _icons->getX(), _icons->getY() + 16));
 	}
 	action->getDetails()->type = SDL_NOEVENT; // consume the event
 }
@@ -1740,6 +1764,7 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		_txtName->setText("");
 		showPsiButton(false);
 		showSpecialButton(false);
+		showSkillsButton(false);
 		toggleKneelButton(0);
 		return;
 	}
@@ -1963,17 +1988,41 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		}
 	}
 
-	showPsiButton(battleUnit->getSpecialWeapon(BT_PSIAMP) != 0);
+	bool hasPsiWeapon = battleUnit->getSpecialWeapon(BT_PSIAMP) != 0;
+	
 	BattleType type = BT_NONE;
 	BattleItem *specialWeapon = battleUnit->getSpecialIconWeapon(type); // updates type!
-	if (specialWeapon && type != BT_NONE && type != BT_AMMO && type != BT_GRENADE && type != BT_PROXIMITYGRENADE && type != BT_FLARE && type != BT_CORPSE)
+	bool hasSpecialWeapon = specialWeapon && type != BT_NONE && type != BT_AMMO && type != BT_GRENADE && type != BT_PROXIMITYGRENADE && type != BT_FLARE && type != BT_CORPSE;
+	
+	bool hasSkills = false;
+	if (soldier != 0)
+	{
+		auto soldierRules = soldier->getRules();
+		hasSkills = soldierRules->isSkillMenuDefined();
+	}
+	if (hasSpecialWeapon)
 	{
 		showPsiButton(false);
 		showSpecialButton(true, specialWeapon->getRules()->getSpecialIconSprite());
+		showSkillsButton(false);
+	}
+	else if (hasSkills)
+	{
+		showPsiButton(false);
+		showSpecialButton(false);
+		showSkillsButton(true, soldier->getRules()->getSkillIconSprite());
+	}
+	else if (hasPsiWeapon)
+	{
+		showPsiButton(true);
+		showSpecialButton(false);
+		showSkillsButton(false);
 	}
 	else
 	{
+		showPsiButton(false);
 		showSpecialButton(false);
+		showSkillsButton(false);
 	}
 }
 
@@ -2933,6 +2982,19 @@ void BattlescapeState::showSpecialButton(bool show, int sprite)
 	}
 	_btnSpecial->setVisible(show);
 }
+	
+/**
+ * Shows the skills button.
+ * @param show Show skills button?
+ */
+void BattlescapeState::showSkillsButton(bool show, int sprite)
+{
+	if (show)
+	{
+		_game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(sprite)->blitNShade(_btnSkills, 0, 0);
+	}
+	_btnSkills->setVisible(show);
+}
 
 /**
  * Clears mouse-scrolling state (isMouseScrolling).
@@ -3311,7 +3373,7 @@ void BattlescapeState::resize(int &dX, int &dY)
 
 	for (std::vector<Surface*>::const_iterator i = _surfaces.begin(); i != _surfaces.end(); ++i)
 	{
-		if (*i != _map && (*i) != _btnPsi && *i != _btnLaunch && *i != _btnSpecial && *i != _txtDebug)
+		if (*i != _map && (*i) != _btnPsi && *i != _btnLaunch && *i != _btnSpecial && *i != _btnSkills && *i != _txtDebug)
 		{
 			(*i)->setX((*i)->getX() + dX / 2);
 			(*i)->setY((*i)->getY() + dY);
