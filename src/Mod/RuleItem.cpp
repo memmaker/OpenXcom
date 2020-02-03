@@ -66,7 +66,7 @@ RuleItem::RuleItem(const std::string &type) :
 	_experienceTrainingMode(ETM_DEFAULT), _manaExperience(0), _listOrder(0),
 	_maxRange(200), _minRange(0), _dropoff(2), _bulletSpeed(0), _explosionSpeed(0), _shotgunPellets(0), _shotgunBehaviorType(0), _shotgunSpread(100), _shotgunChoke(100),
 	_spawnUnitFaction(-1),
-	_LOSRequired(false), _underwaterOnly(false), _landOnly(false), _psiReqiured(false), _manaRequired(false),
+	_LOSRequired(false), _friendlyPsiTargetingAllowed(false), _enemyPsiTargetingAllowed(true), _underwaterOnly(false), _landOnly(false), _psiReqiured(false), _manaRequired(false),
 	_meleePower(0), _specialType(-1), _vaporColor(-1), _vaporDensity(0), _vaporProbability(15),
 	_kneelBonus(-1), _oneHandedPenalty(-1),
 	_monthlySalary(0), _monthlyMaintenance(0),
@@ -599,6 +599,9 @@ void RuleItem::load(const YAML::Node &node, Mod *mod, int listOrder, const ModSc
 	_spawnUnit = node["spawnUnit"].as<std::string>(_spawnUnit);
 	_spawnUnitFaction = node["spawnUnitFaction"].as<int>(_spawnUnitFaction);
 	_LOSRequired = node["LOSRequired"].as<bool>(_LOSRequired);
+	_friendlyPsiTargetingAllowed = node["friendlyTargetingAllowed"].as<bool>(_friendlyPsiTargetingAllowed);
+	_enemyPsiTargetingAllowed = node["enemyTargetingAllowed"].as<bool>(_enemyPsiTargetingAllowed);
+	
 	_meleePower = node["meleePower"].as<int>(_meleePower);
 	_underwaterOnly = node["underwaterOnly"].as<bool>(_underwaterOnly);
 	_landOnly = node["landOnly"].as<bool>(_landOnly);
@@ -2215,6 +2218,24 @@ int RuleItem::getMeleePower() const
 bool RuleItem::isLOSRequired() const
 {
 	return _LOSRequired;
+}
+
+/**
+ * Is targeting friendly units allowed? Only applies to psionic weapons.
+ * @return If targeting friendly units is allowed.
+ */
+bool RuleItem::isFriendlyPsiTargetingAllowed() const
+{
+	return _friendlyPsiTargetingAllowed;
+}
+
+/**
+ * Is targeting enemy units allowed? Only applies to psionic weapons.
+ * @return If targeting enemy units is allowed.
+ */
+bool RuleItem::isEnemyPsiTargetingAllowed() const
+{
+	return _enemyPsiTargetingAllowed;
 }
 
 /**

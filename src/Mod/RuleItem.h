@@ -210,7 +210,7 @@ private:
 	std::map<std::string, std::string> _zombieUnitByArmorMale, _zombieUnitByArmorFemale, _zombieUnitByType;
 	std::string _zombieUnit, _spawnUnit;
 	int _spawnUnitFaction;
-	bool _LOSRequired, _underwaterOnly, _landOnly, _psiReqiured, _manaRequired;
+	bool _LOSRequired, _friendlyPsiTargetingAllowed, _enemyPsiTargetingAllowed, _underwaterOnly, _landOnly, _psiReqiured, _manaRequired;
 	int _meleePower, _specialType, _vaporColor, _vaporDensity, _vaporProbability;
 	std::vector<int> _customItemPreviewIndex;
 	int _kneelBonus, _oneHandedPenalty;
@@ -635,6 +635,10 @@ public:
 	int getSpawnUnitFaction() const;
 	/// Check if LOS is required to use this item (only applies to psionic type items)
 	bool isLOSRequired() const;
+	/// Check if targeting friendly units is allowed.
+	bool isFriendlyPsiTargetingAllowed() const;
+	/// Check if targeting enemy units is allowed.
+	bool isEnemyPsiTargetingAllowed() const;
 	/// Is this item restricted to underwater use?
 	bool isWaterOnly() const;
 	/// Is this item restricted to land use?
