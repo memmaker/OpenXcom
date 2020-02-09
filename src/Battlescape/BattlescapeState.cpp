@@ -1988,7 +1988,13 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		}
 	}
 
+	updateUiButton(battleUnit);
+}
+
+void BattlescapeState::updateUiButton(const BattleUnit *battleUnit)
+{
 	bool hasPsiWeapon = battleUnit->getSpecialWeapon(BT_PSIAMP) != 0;
+	auto soldier = battleUnit->getGeoscapeSoldier();
 	
 	BattleType type = BT_NONE;
 	BattleItem *specialWeapon = battleUnit->getSpecialIconWeapon(type); // updates type!
@@ -2002,27 +2008,46 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 	}
 	if (hasSpecialWeapon)
 	{
-		showPsiButton(false);
-		showSpecialButton(true, specialWeapon->getRules()->getSpecialIconSprite());
-		showSkillsButton(false);
+		showUiButton(BTN_SPECIAL, specialWeapon->getRules()->getSpecialIconSprite());
 	}
 	else if (hasSkills)
 	{
-		showPsiButton(false);
-		showSpecialButton(false);
-		showSkillsButton(true, soldier->getRules()->getSkillIconSprite());
+		showUiButton(BTN_SKILL, soldier->getRules()->getSkillIconSprite());
 	}
 	else if (hasPsiWeapon)
 	{
-		showPsiButton(true);
-		showSpecialButton(false);
-		showSkillsButton(false);
+		showUiButton(BTN_PSI);
 	}
 	else
 	{
-		showPsiButton(false);
-		showSpecialButton(false);
-		showSkillsButton(false);
+		showUiButton(BTN_NONE);
+	}
+}
+
+void BattlescapeState::showUiButton(ButtonType buttonType, int spriteIndex)
+{
+	switch (buttonType) {
+		case BTN_PSI:
+			showPsiButton(true);
+			showSpecialButton(false);
+			showSkillsButton(false);
+			break;
+		case BTN_SPECIAL:
+			showPsiButton(false);
+			showSpecialButton(true, spriteIndex);
+			showSkillsButton(false);
+			break;
+		case BTN_SKILL:
+			showPsiButton(false);
+			showSpecialButton(false);
+			showSkillsButton(true, spriteIndex);
+			break;
+		case BTN_NONE:
+		default:
+			showPsiButton(false);
+			showSpecialButton(false);
+			showSkillsButton(false);
+			break;
 	}
 }
 

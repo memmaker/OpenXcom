@@ -1778,14 +1778,14 @@ RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const Rule
 			default:
 				break;
 		}
-		
 		// if it's a percentage, apply it to unit TUs
 		applyPercentages(cost, flat);
 	}
 	return cost;
 }
-	
-void BattleUnit::applyPercentages(RuleItemUseCost &cost, const RuleItemUseCost &flat) const {
+
+void BattleUnit::applyPercentages(RuleItemUseCost &cost, const RuleItemUseCost &flat) const
+{
 	if (!flat.Time && cost.Time)
 	{
 		cost.Time = std::max(1, (int)floor(getBaseStats()->tu * cost.Time / 100.0f));

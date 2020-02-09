@@ -190,8 +190,16 @@ void RuleSoldier::load(const YAML::Node &node, Mod *mod, int listOrder, const Mo
 	{
 		if (n)
 		{
-			RuleSkill *skill = new RuleSkill(offset);
-			
+			RuleSkill *skill;
+			if (offset < (int)_skills.size())
+			{
+				skill = _skills.at(offset);
+			}
+			else
+			{
+				skill = new RuleSkill(offset);
+			}
+
 			loadCost(skill->Cost, n, "Use");
 			loadPercent(skill->Flat, n, "Use");
 			
@@ -362,7 +370,7 @@ bool RuleSoldier::isSkillMenuDefined() const
  * Gets the list of defined skills.
  * @return The list of defined skills.
  */
-const std::vector<const RuleSkill*> RuleSoldier::getSkills() const
+const std::vector<RuleSkill*> &RuleSoldier::getSkills() const
 {
 	return _skills;
 }

@@ -51,7 +51,7 @@ namespace OpenXcom
  * @param x Position on the x-axis.
  * @param y position on the y-axis.
  */
-	SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuState(action)
+SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuState(action)
 {
 	_screen = false;
 	
@@ -231,7 +231,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 	}
 }
 
-void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> compatibleWeaponTypes, bool checkHandsOnly)
+void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, bool checkHandsOnly)
 {
 	auto unit = action->actor;
 	action->weapon = nullptr;

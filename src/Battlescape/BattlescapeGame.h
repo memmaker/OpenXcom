@@ -48,27 +48,28 @@ struct BattleActionCost : RuleItemUseCost
 	BattleActionType type;
 	BattleUnit *actor;
 	BattleItem *weapon;
+	const RuleSkill* skillRules; // if defined, this is a skill action
 
 	/// Default constructor.
-	BattleActionCost() : type(BA_NONE), actor(0), weapon(0) { }
+	BattleActionCost() : type(BA_NONE), actor(0), weapon(0), skillRules(0) { }
 
 	/// Constructor from unit.
-	BattleActionCost(BattleUnit *unit) : type(BA_NONE), actor(unit), weapon(0) { }
+	BattleActionCost(BattleUnit *unit) : type(BA_NONE), actor(unit), weapon(0), skillRules(0) { }
 
 	/// Constructor with update.
-	BattleActionCost(BattleActionType action, BattleUnit *unit, BattleItem *item) : type(action), actor(unit), weapon(item) { updateTU(); }
+	BattleActionCost(BattleActionType action, BattleUnit *unit, BattleItem *item) : type(action), actor(unit), weapon(item), skillRules(0) { updateTU(); }
 
 	/// Update value of TU based of actor, weapon and type.
-	virtual void updateTU();
+	void updateTU();
 	/// Set TU to zero.
-	virtual void clearTU();
+	void clearTU();
 	/// Test if actor have enough TU to perform weapon action.
-	virtual bool haveTU(std::string *message = 0);
+	bool haveTU(std::string *message = 0);
 	/// Spend TU when actor have enough TU.
-	virtual bool spendTU(std::string *message = 0);
+	bool spendTU(std::string *message = 0);
 };
 
-struct BattleAction final : BattleActionCost
+struct BattleAction : BattleActionCost
 {
 	Position target;
 	std::list<Position> waypoints;
@@ -82,16 +83,12 @@ struct BattleAction final : BattleActionCost
 	bool desperate; // ignoring newly-spotted units
 	int finalFacing;
 	bool finalAction;
-	const RuleSkill* skillRules; // if defined, this is a skill action
 	int number; // first action of turn, second, etc.?
 	bool sprayTargeting; // Used to separate waypoint checks between confirm firing mode and the "spray" autoshot
 
 	/// Default constructor
-	BattleAction() : target(-1, -1, -1), targeting(false), value(0), strafe(false), run(false), ignoreSpottedEnemies(false), diff(0), autoShotCounter(0), cameraPosition(0, 0, -1), desperate(false), finalFacing(-1), finalAction(false), skillRules(nullptr), number(0), sprayTargeting(false) { }
+	BattleAction() : target(-1, -1, -1), targeting(false), value(0), strafe(false), run(false), ignoreSpottedEnemies(false), diff(0), autoShotCounter(0), cameraPosition(0, 0, -1), desperate(false), finalFacing(-1), finalAction(false), number(0), sprayTargeting(false) { }
 
-	bool haveTU(std::string *message = 0);
-	void updateTU();
-	
 	/// Get move type
 	BattleActionMove getMoveType() const
 	{

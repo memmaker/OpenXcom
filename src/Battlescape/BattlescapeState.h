@@ -46,6 +46,9 @@ class BattlescapeGame;
  */
 class BattlescapeState : public State
 {
+
+enum ButtonType { BTN_NONE, BTN_PSI, BTN_SPECIAL, BTN_SKILL };
+
 private:
 	Surface *_rank, *_rankTiny;
 	InteractiveSurface *_icons;
@@ -104,6 +107,12 @@ private:
 	void blinkHealthBar();
 	/// Shows the unit kneel state.
 	void toggleKneelButton(BattleUnit* unit);
+	/// Shows the PSI button.
+	void showPsiButton(bool show);
+	/// Shows the special weapon button.
+	void showSpecialButton(bool show, int sprite = 1);
+	/// Shows the skills menu button.
+	void showSkillsButton(bool show, int sprite = 1);
 public:
 	/// Selects the next soldier.
 	void selectNextPlayerUnit(bool checkReselect = false, bool setReselect = false, bool checkInventory = false, bool checkFOV = true);
@@ -217,12 +226,10 @@ public:
 	void finishBattle(bool abort, int inExitArea);
 	/// Show the launch button.
 	void showLaunchButton(bool show);
-	/// Shows the PSI button.
-	void showPsiButton(bool show);
-	/// Shows the special weapon button.
-	void showSpecialButton(bool show, int sprite = 1);
-	/// Shows the skills menu button.
-	void showSkillsButton(bool show, int sprite = 1);
+	/// Show one of Psi, Special or Skill button
+	void showUiButton(ButtonType buttonType = BTN_NONE, int spriteIndex = 1);
+	/// Updates the special/psi/skill button display based on the battle unit
+	void updateUiButton(const BattleUnit *battleUnit);
 	/// Clears mouse-scrolling state.
 	void clearMouseScrollingState();
 	/// Returns a pointer to the battlegame, in case we need its functions.

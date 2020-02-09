@@ -70,28 +70,13 @@ bool BattlescapeGame::_debugPlay = false;
  */
 void BattleActionCost::updateTU()
 {
-	if (actor && weapon)
-	{
-		*(RuleItemUseCost*)this = actor->getActionTUs(type, weapon);
-	}
-	else
-	{
-		clearTU();
-	}
-}
-
-/**
- * Update value of TU and Energy
- */
-void BattleAction::updateTU()
-{
-	if (!skillRules)
-	{
-		return BattleActionCost::updateTU();
-	}
 	if (actor && skillRules)
 	{
 		*(RuleItemUseCost*)this = actor->getActionTUs(type, skillRules);
+	}
+	else if (actor && weapon)
+	{
+		*(RuleItemUseCost*)this = actor->getActionTUs(type, weapon);
 	}
 	else
 	{
@@ -108,80 +93,18 @@ void BattleActionCost::clearTU()
 }
 
 /**
- * Test if skill action can by performed.
- * @param message optional message with error condition.
- * @return Unit have enough stats to perform action.
- */
-bool BattleAction::haveTU(std::string *message)
-{
-	if (!skillRules)
-	{
-		return BattleActionCost::haveTU(message);
-	}
-	
-	if (actor->getTimeUnits() < Time)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_TIME_UNITS";
-		}
-		return false;
-	}
-	if (actor->getEnergy() < Energy)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_ENERGY";
-		}
-		return false;
-	}
-	if (actor->getMorale() < Morale)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_MORALE";
-		}
-		return false;
-	}
-	if (actor->getHealth() <= Health)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_HEALTH";
-		}
-		return false;
-	}
-	if (actor->getMana() < Mana)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_MANA";
-		}
-		return false;
-	}
-	if (actor->getHealth() - actor->getStunlevel() <= Stun + Health)
-	{
-		if (message)
-		{
-			*message = "STR_NOT_ENOUGH_STUN";
-		}
-		return false;
-	}
-	return true;
-}
-
-/**
- * Test if action can by performed.
+ * Test if action can be performed.
  * @param message optional message with error condition.
  * @return Unit have enough stats to perform action.
  */
 bool BattleActionCost::haveTU(std::string *message)
 {
-	if (Time <= 0)
+	if (!skillRules && Time <= 0)
 	{
 		//no action, no message
 		return false;
 	}
+
 	if (actor->getTimeUnits() < Time)
 	{
 		if (message)
@@ -1055,23 +978,7 @@ void BattlescapeGame::checkForCasualties(const RuleDamageType *damageType, Battl
 	{
 		if (bu && !bu->isOut())
 		{
-			if (bu->getSpecialWeapon(BT_PSIAMP))
-			{
-				_parentState->showPsiButton(true);
-				_parentState->showSpecialButton(false);
-				_parentState->showSkillsButton(false);
-			}
-
-			BattleType type = BT_NONE;
-			BattleItem *specialWeapon = bu->getSpecialIconWeapon(type); // updates type!
-			bool hasSpecialWeapon = specialWeapon && type != BT_NONE && type != BT_AMMO && type != BT_GRENADE && type != BT_PROXIMITYGRENADE && type != BT_FLARE && type != BT_CORPSE;
-			
-			if (hasSpecialWeapon)
-			{
-				_parentState->showPsiButton(false);
-				_parentState->showSpecialButton(true, specialWeapon->getRules()->getSpecialIconSprite());
-				_parentState->showSkillsButton(false);
-			}
+			_parentState->updateUiButton(bu);
 		}
 	}
 }
@@ -2211,9 +2118,7 @@ BattleUnit *BattlescapeGame::convertUnit(BattleUnit *unit)
 
 	bool visible = unit->getVisible();
 
-	getSave()->getBattleState()->showPsiButton(false);
-	getSave()->getBattleState()->showSpecialButton(false);
-	getSave()->getBattleState()->showSkillsButton(false);
+	getSave()->getBattleState()->showUiButton();
 	// in case the unit was unconscious
 	getSave()->removeUnconsciousBodyItem(unit);
 

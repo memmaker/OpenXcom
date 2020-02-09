@@ -491,7 +491,7 @@ void ActionMenuState::handleAction()
 	{
 		_game->getSavedGame()->getSavedBattle()->appendToHitLog(HITLOG_PLAYER_FIRING, FACTION_PLAYER, tr(weapon->getType()));
 	}
-	}
+}
 
 /**
  * Updates the scale.

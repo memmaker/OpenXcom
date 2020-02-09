@@ -110,7 +110,7 @@ private:
 	int _rankSprite, _rankSpriteBattlescape, _rankSpriteTiny, _skillIconSprite;
 	ScriptValues<RuleSoldier> _scriptValues;
 	
-	std::vector<const RuleSkill*> _skills;
+	std::vector<RuleSkill*> _skills;
 	void addSoldierNamePool(const std::string &namFile);
 public:
 	/// Creates a blank soldier ruleset.
@@ -148,7 +148,7 @@ public:
 	/// Has the soldier type a skill menu defined?
 	bool isSkillMenuDefined() const;
 	/// Returns the skill definition at the specified index
-	const std::vector<const RuleSkill*> getSkills() const;
+	const std::vector<RuleSkill*> &getSkills() const;
 	/// Return the sprite index for the skill icon sprite.
 	int getSkillIconSprite() const;
 	/// Gets the monthly salary of the soldier (for a given rank).
