@@ -1762,9 +1762,7 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 	if (!playableUnit)
 	{
 		_txtName->setText("");
-		showPsiButton(false);
-		showSpecialButton(false);
-		showSkillsButton(false);
+		showUiButton();
 		toggleKneelButton(0);
 		return;
 	}
