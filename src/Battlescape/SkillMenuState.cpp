@@ -82,7 +82,7 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
 		{
 			_action->skillRules = skill;
-			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->checkHandsOnly());
+			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->getCompatibleBattleType(), skill->checkHandsOnly());
 			addItem(skill->getTargetMode(), skill->getType(), &id, hotkeys.back());
 			hotkeys.pop_back();
 		}
@@ -186,10 +186,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 		const RuleSkill *selectedSkill = skills.at(btnID);
 		_action->skillRules = selectedSkill;
 		_action->type = _actionMenu[btnID]->getAction();
-		if (selectedSkill->getCompatibleWeapons().size() > 0)
-		{
-			chooseWeaponForSkill(_action, selectedSkill->getCompatibleWeapons(), selectedSkill->checkHandsOnly());
-		}
+		chooseWeaponForSkill(_action, selectedSkill->getCompatibleWeapons(), selectedSkill->getCompatibleBattleType(), selectedSkill->checkHandsOnly());
 		_action->updateTU();
 
 		bool continueAction = tileEngine->skillUse(_action, selectedSkill);
@@ -231,58 +228,100 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 	}
 }
 
-void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, bool checkHandsOnly)
+void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, BattleType compatibleBattleType, bool checkHandsOnly)
 {
 	auto unit = action->actor;
 	action->weapon = nullptr;
 	
 	// skip the vehicles, we need only X-Com soldiers WITH equipment-layout
-	if (unit->getGeoscapeSoldier()->getEquipmentLayout()->empty())
+	if (unit->getGeoscapeSoldier()->getEquipmentLayout()->empty() || action->type == BA_NONE)
 	{
 		return;
 	}
-	
-	for (auto itemType : compatibleWeaponTypes)
+	if (compatibleWeaponTypes.size() > 0) // choose by item type
 	{
-		// check both hands, right first
-		if (unit->getRightHandWeapon() && unit->getRightHandWeapon()->getRules()->getType() == itemType)
+		for (auto itemType : compatibleWeaponTypes)
 		{
-			action->weapon = unit->getRightHandWeapon();
-			return;
-		}
-		else if (unit->getLeftHandWeapon() && unit->getLeftHandWeapon()->getRules()->getType() == itemType)
-		{
-			action->weapon = unit->getLeftHandWeapon();
-			return;
-		}
-		
-		if (!checkHandsOnly)
-		{
-			// check special weapons
-			BattleItem *item = unit->getSpecialWeapon(itemType);
-			if (item)
+			// check both hands, right first
+			if (unit->getRightHandWeapon() && unit->getRightHandWeapon()->getRules()->getType() == itemType)
 			{
-				action->weapon = item;
+				action->weapon = unit->getRightHandWeapon();
 				return;
 			}
-			
-			// check inventory
-			for (auto layoutItem : *unit->getGeoscapeSoldier()->getEquipmentLayout())
+			else if (unit->getLeftHandWeapon() && unit->getLeftHandWeapon()->getRules()->getType() == itemType)
 			{
-				if (itemType != layoutItem->getItemType()) continue;
-				
-				auto inventorySlot = _game->getMod()->getInventory(layoutItem->getSlot(), true);
-				
-				auto item = unit->getItem(inventorySlot, layoutItem->getSlotX(), layoutItem->getSlotY());
-				
+				action->weapon = unit->getLeftHandWeapon();
+				return;
+			}
+			if (!checkHandsOnly)
+			{
+				// check special weapons
+				BattleItem *item = unit->getSpecialWeapon(itemType);
 				if (item)
 				{
 					action->weapon = item;
 					return;
 				}
+				// check inventory
+				for (auto layoutItem : *unit->getGeoscapeSoldier()->getEquipmentLayout())
+				{
+					if (itemType != layoutItem->getItemType()) continue;
+					auto inventorySlot = _game->getMod()->getInventory(layoutItem->getSlot(), true);
+					auto item = unit->getItem(inventorySlot, layoutItem->getSlotX(), layoutItem->getSlotY());
+					if (item)
+					{
+						action->weapon = item;
+						return;
+					}
+				}
 			}
 		}
 	}
+	if (compatibleBattleType == BT_NONE)
+	{
+		compatibleBattleType = getBattleTypeFromActionType(action->type);
+	}
+	BattleItem *item = findItemInInventory(action->actor, compatibleBattleType);
+	if (item)
+	{
+		action->weapon = item;
+		return;
+	}
 }
 
+BattleType SkillMenuState::getBattleTypeFromActionType(BattleActionType actionType)
+{
+	switch (actionType) {
+		case BA_HIT:
+			return BT_MELEE;
+		case BA_SNAPSHOT:
+		case BA_AIMEDSHOT:
+		case BA_AUTOSHOT:
+		case BA_LAUNCH:
+			return BT_FIREARM;
+		case BA_THROW:
+			return BT_GRENADE;
+		case BA_USE:
+		case BA_PANIC:
+		case BA_MINDCONTROL:
+			return BT_PSIAMP;
+		default:
+			return BT_NONE;
+	}
+}
+
+BattleItem *SkillMenuState::findItemInInventory(const BattleUnit *unit, BattleType battleType)
+{
+	// check inventory
+	for (auto layoutItem : *unit->getGeoscapeSoldier()->getEquipmentLayout())
+	{
+		auto inventorySlot = _game->getMod()->getInventory(layoutItem->getSlot(), true);
+		auto item = unit->getItem(inventorySlot, layoutItem->getSlotX(), layoutItem->getSlotY());
+		if (item->getRules()->getBattleType() == battleType)
+		{
+			return item;
+		}
+	}
+	return 0;
+}
 }

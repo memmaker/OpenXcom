@@ -4131,7 +4131,7 @@ bool TileEngine::skillUse(BattleAction *action, const RuleSkill *skill)
 	bool hasTu = action->haveTU(&message);
 	
 	ModScript::SkillUseUnit::Output args { continueAction, spendTu };
-	ModScript::SkillUseUnit::Worker work { actor, action->weapon, _save, action->type, skill->getScriptId(), hasTu };
+	ModScript::SkillUseUnit::Worker work { actor, action->weapon, _save, skill, action->type, hasTu };
 	
 	work.execute(actor->getArmor()->getScript<ModScript::SkillUseUnit>(), args);
 

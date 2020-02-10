@@ -17,11 +17,12 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "RuleSkill.h"
+#include "../Engine/ScriptBind.h"
 
 namespace OpenXcom
 {
 
-RuleSkill::RuleSkill(const std::string &type) : _type(type), _targetMode(BA_NONE), _compatibleWeapons({}), _requiredBonus({}), _isPsiRequired(false), _checkHandsOnly(true), _scriptId(-1)
+RuleSkill::RuleSkill(const std::string &type) : _type(type), _targetMode(BA_NONE), _compatibleWeapons({}), _compatibleBattleType(BT_NONE), _requiredBonus({}), _isPsiRequired(false), _checkHandsOnly(true)
 {}
 
 /**
@@ -35,29 +36,33 @@ void RuleSkill::load(const YAML::Node &node, Mod *mod, const ModScript &parsers)
 	{
 		load(parent, mod, parsers);
 	}
-	_scriptId = node["scriptId"].as<int>(_scriptId);
+	_type = node["type"].as<std::string>(_type);
 	
 	_cost.loadCost(node, "Use");
 	_flat.loadPercent(node, "Use");
 	
 	_requiredBonus = node["requiredBonus"].as<std::vector<std::string>>(_requiredBonus);
+
 	int targetMode = node["targetMode"].as<int>(_targetMode);
 	targetMode = targetMode < 0 ? 0 : targetMode;
 	targetMode = targetMode > BA_CQB ? 0 : targetMode;
 	_targetMode = static_cast<BattleActionType>(targetMode);
+
 	_isPsiRequired = node["isPsiRequired"].as<bool>(_isPsiRequired);
 	_checkHandsOnly = node["checkHandsOnly"].as<bool>(_checkHandsOnly);
 	_compatibleWeapons = node["compatibleWeapons"].as<std::vector<std::string>>(_compatibleWeapons);
+
+	int compBattleType = node["battleType"].as<int>(_compatibleBattleType);
+	compBattleType = compBattleType < 0 ? 0 : compBattleType;
+	compBattleType = compBattleType > BT_CORPSE ? 0 : compBattleType;
+	_compatibleBattleType = static_cast<BattleType>(compBattleType);
+
+	_scriptValues.load(node, parsers.getShared());
 }
-	
 
 const std::string RuleSkill::getType() const
 {
 	return _type;
-}
-int RuleSkill::getScriptId() const
-{
-	return _scriptId;
 }
 bool RuleSkill::isPsiRequired() const
 {
@@ -83,42 +88,18 @@ const std::vector<std::string> RuleSkill::getCompatibleWeapons() const
 {
 	return _compatibleWeapons;
 }
+BattleType RuleSkill::getCompatibleBattleType() const
+{
+	return _compatibleBattleType;
+}
 const std::vector<std::string> RuleSkill::getRequiredBonus() const
 {
 	return _requiredBonus;
 }
 
-void RuleSkill::setScriptId(int scriptId)
+void RuleSkill::ScriptRegister(ScriptParserBase* parser)
 {
-	_scriptId = scriptId;
+	Bind<RuleSkill> rs = { parser };
+	rs.addScriptValue<&RuleSkill::_scriptValues>();
 }
-void RuleSkill::setIsPsiRequired(bool isPsiRequired)
-{
-	_isPsiRequired = isPsiRequired;
-}
-void RuleSkill::setCheckHandsOnly(bool checkHandsOnly)
-{
-	_checkHandsOnly = checkHandsOnly;
-}
-void RuleSkill::setFlat(RuleItemUseCost flat)
-{
-	_flat = flat;
-}
-void RuleSkill::setCost(RuleItemUseCost cost)
-{
-	_cost = cost;
-}
-void RuleSkill::setTargetMode(BattleActionType targetMode)
-{
-	_targetMode = targetMode;
-}
-void RuleSkill::setCompatibleWeapons(std::vector<std::string> compatibleWeapons)
-{
-	_compatibleWeapons = compatibleWeapons;
-}
-void RuleSkill::setRequiredBonus(std::vector<std::string> requiredBonus)
-{
-	_requiredBonus = requiredBonus;
-}
-
 }

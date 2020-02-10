@@ -41,6 +41,7 @@ class Armor;
 class RuleInventory;
 class RuleResearch;
 class RuleManufacture;
+class RuleSkill;
 class AlienRace;
 class RuleAlienMission;
 class Base;
@@ -99,11 +100,11 @@ class ModScript
 	{
 		VisibilityUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, int, int, int, int>
+	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int>
 	{
 		HitUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct SkillUseUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&>, BattleUnit*, BattleItem*, SavedBattleGame*, int, int, int>
+	struct SkillUseUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&>, BattleUnit*, BattleItem*, SavedBattleGame*, const RuleSkill*, int, int>
 	{
 		SkillUseUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
@@ -111,7 +112,7 @@ class ModScript
 	{
 		TryPsiAttackUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, int, int, int, int, int, int>
+	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int>
 	{
 		DamageUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};

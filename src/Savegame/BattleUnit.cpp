@@ -1449,11 +1449,9 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 	const int orgDamage = damage;
 	const int overKillMinimum = type->IgnoreOverKill ? 0 : -4 * _stats.health;
 
-	const int skillId = attack.skill_rules ? attack.skill_rules->getScriptId() : -1;
-	
 	{
 		ModScript::HitUnit::Output args { damage, bodypart, side, };
-		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, orgDamage, type->ResistType, attack.type, skillId };
+		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, orgDamage, type->ResistType, attack.type };
 
 		work.execute(this->getArmor()->getScript<ModScript::HitUnit>(), args);
 
@@ -1537,7 +1535,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 			std::get<toArmor>(args.data) += type->getArmorFinalDamage(damage);
 		}
 
-		ModScript::DamageUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, damage, orgDamage, bodypart, side, type->ResistType, attack.type, };
+		ModScript::DamageUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, damage, orgDamage, bodypart, side, type->ResistType, attack.type, };
 
 		work.execute(this->getArmor()->getScript<ModScript::DamageUnit>(), args);
 
@@ -5144,6 +5142,7 @@ void BattleUnit::ScriptRegister(ScriptParserBase* parser)
 	parser->registerPointerType<RuleSoldier>();
 	parser->registerPointerType<BattleItem>();
 	parser->registerPointerType<Soldier>();
+	parser->registerPointerType<RuleSkill>();
 
 	Bind<BattleUnit> bu = { parser };
 
@@ -5222,13 +5221,11 @@ void BattleUnit::ScriptRegister(ScriptParserBase* parser)
 	bu.add<&getPositionYScript>("getPosition.getY");
 	bu.add<&getPositionZScript>("getPosition.getZ");
 	bu.add<&BattleUnit::getTurnsSinceSpotted>("getTurnsSinceSpotted");
-	
+
 	bu.addScriptValue<&BattleUnit::_scriptValues>();
 	bu.addDebugDisplay<&debugDisplayScript>();
 
-
 	bu.add<&getTileShade>("getTileShade");
-
 
 	bu.addCustomConst("BODYPART_HEAD", BODYPART_HEAD);
 	bu.addCustomConst("BODYPART_TORSO", BODYPART_TORSO);
@@ -5437,7 +5434,7 @@ ModScript::DamageUnitParser::DamageUnitParser(ScriptGlobal* shared, const std::s
 	"to_transform",
 	"to_mana",
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "currPower", "orig_power", "part", "side", "damaging_type", "battle_action", }
+	"battle_game", "skill", "currPower", "orig_power", "part", "side", "damaging_type", "battle_action", }
 {
 	BindBase b { this };
 
@@ -5469,7 +5466,7 @@ ModScript::HitUnitParser::HitUnitParser(ScriptGlobal* shared, const std::string&
 	"part",
 	"side",
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "orig_power", "damaging_type", "battle_action", "skill_id" }
+	"battle_game", "skill", "orig_power", "damaging_type", "battle_action" }
 {
 	BindBase b { this };
 
@@ -5484,8 +5481,8 @@ ModScript::SkillUseUnitParser::SkillUseUnitParser(ScriptGlobal* shared, const st
 	"actor",
 	"item",
 	"battle_game",
+	"skill",
 	"battle_action",
-	"skill_id",
 	"have_tu"
 }
 {

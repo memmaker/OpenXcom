@@ -59,6 +59,10 @@ RuleSoldier::~RuleSoldier()
 	{
 		delete *i;
 	}
+	for (auto i = _skills.begin(); i != _skills.end(); ++i)
+	{
+		delete *i;
+	}
 }
 
 /**
@@ -221,6 +225,7 @@ void RuleSoldier::afterLoad(const Mod* mod)
 				_skills.push_back(skill);
 			}
 		}
+		_skillNames.clear();
 	}
 }
 
@@ -345,7 +350,7 @@ bool RuleSoldier::isSkillMenuDefined() const
  * Gets the list of defined skills.
  * @return The list of defined skills.
  */
-const std::vector<RuleSkill*> &RuleSoldier::getSkills() const
+const std::vector<const RuleSkill*> &RuleSoldier::getSkills() const
 {
 	return _skills;
 }

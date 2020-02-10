@@ -20,46 +20,43 @@
 #include <string>
 #include <vector>
 #include "RuleSoldier.h"
+#include "ModScript.h"
 
 namespace OpenXcom
 {
 
 class RuleSkill
 {
-	private:
-		std::string _type;
-		RuleItemUseCost _cost;
-		RuleItemUseCost _flat;
-		BattleActionType _targetMode;
-		std::vector<std::string> _compatibleWeapons;
-		std::vector<std::string> _requiredBonus;
-		bool _isPsiRequired;
-		bool _checkHandsOnly;
-		int _scriptId;
+private:
+	std::string _type;
+	RuleItemUseCost _cost;
+	RuleItemUseCost _flat;
+	BattleActionType _targetMode;
+	std::vector<std::string> _compatibleWeapons;
+	BattleType _compatibleBattleType;
+	std::vector<std::string> _requiredBonus;
+	bool _isPsiRequired;
+	bool _checkHandsOnly;
+	ScriptValues<RuleSkill> _scriptValues;
+public:
+	/// Default constructor.
+	RuleSkill(const std::string &type);
 
-	public:
-		/// Default constructor.
-		RuleSkill(const std::string &type);
+	void load(const YAML::Node &node, Mod *mod, const ModScript &parsers);
+	const std::string getType() const;
+	bool isPsiRequired() const;
+	bool checkHandsOnly() const;
+	const RuleItemUseCost getFlat() const;
+	const RuleItemUseCost getCost() const;
+	BattleActionType getTargetMode() const;
+	const std::vector<std::string> getCompatibleWeapons() const;
+	BattleType getCompatibleBattleType() const;
+	const std::vector<std::string> getRequiredBonus() const;
 
-		void load(const YAML::Node &node, Mod *mod, const ModScript &parsers);
-		const std::string getType() const;
-		int getScriptId() const;
-		bool isPsiRequired() const;
-		bool checkHandsOnly() const;
-		const RuleItemUseCost getFlat() const;
-		const RuleItemUseCost getCost() const;
-		BattleActionType getTargetMode() const;
-		const std::vector<std::string> getCompatibleWeapons() const;
-		const std::vector<std::string> getRequiredBonus() const;
-	
-		void setScriptId(int scriptId);
-		void setIsPsiRequired(bool isPsiRequired);
-		void setCheckHandsOnly(bool checkHandsOnly);
-		void setFlat(RuleItemUseCost flat);
-		void setCost(RuleItemUseCost cost);
-		void setTargetMode(BattleActionType targetMode);
-		void setCompatibleWeapons(std::vector<std::string> compatibleWeapons);
-		void setRequiredBonus(std::vector<std::string> requiredBonus);
+	/// Name of class used in script.
+	static constexpr const char *ScriptName = "RuleSkill";
+	/// Register all useful function used by script.
+	static void ScriptRegister(ScriptParserBase* parser);
 };
 
 }

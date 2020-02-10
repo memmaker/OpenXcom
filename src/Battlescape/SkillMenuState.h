@@ -40,7 +40,9 @@ private:
 	bool hasBonus(Soldier *soldier, const RuleSkill *skillRules);
 	/// Adds a new menu item for an action.
 	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key);
-	void chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, bool checkHandsOnly);
+	void chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, BattleType compatibleWeaponType, bool checkHandsOnly);
+	BattleItem *findItemInInventory(const BattleUnit *unit, BattleType battleType);
+	BattleType getBattleTypeFromActionType(BattleActionType actionType);
 public:
 	/// Creates the Action Menu state.
 	SkillMenuState(BattleAction *action, int x, int y);
