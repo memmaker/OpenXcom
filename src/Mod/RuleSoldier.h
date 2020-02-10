@@ -33,27 +33,6 @@ class ModScript;
 class SoldierNamePool;
 class StatString;
 
-struct RuleSkill
-{
-	std::string Name;
-	RuleItemUseCost Cost;
-	RuleItemUseCost Flat;
-	BattleActionType TargetMode;
-	std::vector<std::string> CompatibleWeapons;
-	std::vector<std::string> RequiredBonus;
-	bool IsPsiRequired;
-	
-	bool CheckHandsOnly;
-	const int Id;
-	
-	/// Default constructor.
-	RuleSkill(int index) : Name("STR_SKILL_USE"), TargetMode(BA_NONE), IsPsiRequired(false), CheckHandsOnly(true), Id(index)
-	{
-		CompatibleWeapons = {};
-		RequiredBonus = {};
-	}
-};
-
 /**
  * Represents the creation data for an X-COM unit.
  * This info is copied to either Soldier for Geoscape or BattleUnit for Battlescape.
@@ -109,7 +88,7 @@ private:
 	std::vector<std::string> _rankStrings;
 	int _rankSprite, _rankSpriteBattlescape, _rankSpriteTiny, _skillIconSprite;
 	ScriptValues<RuleSoldier> _scriptValues;
-	
+	std::vector<std::string> _skillNames;
 	std::vector<RuleSkill*> _skills;
 	void addSoldierNamePool(const std::string &namFile);
 public:
@@ -223,14 +202,6 @@ public:
 	int getRankSpriteBattlescape() const;
 	/// Gets the offset of the rank sprite in TinyRanks.
 	int getRankSpriteTiny() const;
-	/// Load int from yaml.
-	void loadInt(int& a, const YAML::Node& node) const;
-	/// Load RuleItemUseCost from yaml.
-	void loadCost(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const;
-	/// Load extended cost definition from yaml.
-	void loadPercent(RuleItemUseCost& a, const YAML::Node& node, const std::string& name) const;
-	/// Load a nullable bool from yaml.
-	void loadTriBool(int& a, const YAML::Node& node) const;
 };
 
 }

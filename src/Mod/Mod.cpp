@@ -65,6 +65,7 @@
 #include "RuleTerrain.h"
 #include "MapScript.h"
 #include "RuleSoldier.h"
+#include "RuleSkill.h"
 #include "RuleCommendations.h"
 #include "AlienRace.h"
 #include "RuleEnviroEffects.h"
@@ -1657,6 +1658,14 @@ void Mod::loadFile(const FileMap::FileRecord &filerec, ModScript &parsers)
 			rule->load(*i, parsers, this);
 		}
 	}
+	for (YAML::const_iterator i = doc["skills"].begin(); i != doc["skills"].end(); ++i)
+	{
+		RuleSkill *rule = loadRule(*i, &_skills, &_skillsIndex);
+		if (rule != 0)
+		{
+			rule->load(*i, this, parsers);
+		}
+	}
 	for (YAML::const_iterator i = doc["soldiers"].begin(); i != doc["soldiers"].end(); ++i)
 	{
 		RuleSoldier *rule = loadRule(*i, &_soldiers, &_soldiersIndex);
@@ -2698,6 +2707,16 @@ MapDataSet *Mod::getMapDataSet(const std::string &name)
 	{
 		return map->second;
 	}
+}
+
+/**
+ * Returns the rules for the specified skill.
+ * @param id Skill type.
+ * @return Rules for the skill, or 0 when the skill is not found.
+ */
+RuleSkill *Mod::getSkill(const std::string &name, bool error) const
+{
+	return getRule(name, "Skill", _skills, error);
 }
 
 /**

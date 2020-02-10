@@ -27,6 +27,7 @@
 #include "../Savegame/BattleItem.h"
 #include "../Savegame/SoldierDiary.h"
 #include "../Mod/Mod.h"
+#include "../Mod/RuleSkill.h"
 #include "../Mod/RuleSoldier.h"
 #include "../Mod/RuleSoldierBonus.h"
 #include "ActionMenuItem.h"
@@ -77,12 +78,12 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 	for (auto skill : skills)
 	{
 		if (hasBonus(soldier, skill)
-			&& (skill->Cost.Time > 0 || skill->Cost.Mana > 0)
-			&& (!skill->IsPsiRequired || _action->actor->getBaseStats()->psiSkill > 0))
+			&& (skill->getCost().Time > 0 || skill->getCost().Mana > 0)
+			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
 		{
 			_action->skillRules = skill;
-			chooseWeaponForSkill(_action, skill->CompatibleWeapons, skill->CheckHandsOnly);
-			addItem(skill->TargetMode, skill->Name, &id, hotkeys.back());
+			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->checkHandsOnly());
+			addItem(skill->getTargetMode(), skill->getType(), &id, hotkeys.back());
 			hotkeys.pop_back();
 		}
 	}
@@ -101,7 +102,7 @@ SkillMenuState::~SkillMenuState()
 bool SkillMenuState::hasBonus(Soldier *soldier, const RuleSkill *skillRules)
 {
 	// Does the soldier have the required commendations?
-	for (auto reqd_bonus : skillRules->RequiredBonus)
+	for (auto reqd_bonus : skillRules->getRequiredBonus())
 	{
 		bool found = false;
 		for (const RuleSoldierBonus *bonus : *soldier->getBonuses(_game->getMod()))
@@ -185,14 +186,13 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 		const RuleSkill *selectedSkill = skills.at(btnID);
 		_action->skillRules = selectedSkill;
 		_action->type = _actionMenu[btnID]->getAction();
-		_action->value = btnID;
-		if (selectedSkill->CompatibleWeapons.size() > 0)
+		if (selectedSkill->getCompatibleWeapons().size() > 0)
 		{
-			chooseWeaponForSkill(_action, selectedSkill->CompatibleWeapons, selectedSkill->CheckHandsOnly);
+			chooseWeaponForSkill(_action, selectedSkill->getCompatibleWeapons(), selectedSkill->checkHandsOnly());
 		}
 		_action->updateTU();
-		
-		bool continueAction = tileEngine->skillUse(_action, selectedSkill, btnID);
+
+		bool continueAction = tileEngine->skillUse(_action, selectedSkill);
 
 		if (!continueAction || _action->type == BA_NONE)
 		{
@@ -201,7 +201,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 			_game->popState();
 			return;
 		}
-		
+
 		// check if the skill needs an item, if so check if an item was found
 		BattleItem *item = _action->weapon;
 		if (_action->type != BA_NONE)
@@ -213,7 +213,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 				return;
 			}
 		}
-		
+
 		if (_action->type == BA_THROW && _action->weapon->getRules()->getBattleType() == BT_GRENADE)
 		{
 			// instant grenades

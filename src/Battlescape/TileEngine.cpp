@@ -40,6 +40,7 @@
 #include "../Mod/Armor.h"
 #include "../Mod/Mod.h"
 #include "../Mod/RuleSoldier.h"
+#include "../Mod/RuleSkill.h"
 #include "Pathfinding.h"
 #include "../Engine/Game.h"
 #include "../Engine/Options.h"
@@ -4121,7 +4122,7 @@ bool TileEngine::medikitUse(BattleAction *action, BattleUnit *target, BattleMedi
  * Executes the skillUseUnit script hook and determines further steps.
  * @return True if the current action should be continued, false if the action should be cancelled (usually because the script took care of any effects itself).
  */
-bool TileEngine::skillUse(BattleAction *action, const RuleSkill *skill, int skillId)
+bool TileEngine::skillUse(BattleAction *action, const RuleSkill *skill)
 {
 	bool continueAction = true;
 	bool spendTu = false;
@@ -4130,7 +4131,7 @@ bool TileEngine::skillUse(BattleAction *action, const RuleSkill *skill, int skil
 	bool hasTu = action->haveTU(&message);
 	
 	ModScript::SkillUseUnit::Output args { continueAction, spendTu };
-	ModScript::SkillUseUnit::Worker work { actor, action->weapon, _save, action->type, skillId, hasTu };
+	ModScript::SkillUseUnit::Worker work { actor, action->weapon, _save, action->type, skill->getScriptId(), hasTu };
 	
 	work.execute(actor->getArmor()->getScript<ModScript::SkillUseUnit>(), args);
 

@@ -37,6 +37,7 @@
 #include "../Mod/Unit.h"
 #include "../Mod/RuleEnviroEffects.h"
 #include "../Mod/RuleInventory.h"
+#include "../Mod/RuleSkill.h"
 #include "../Mod/RuleSoldier.h"
 #include "../Mod/RuleSoldierBonus.h"
 #include "../Mod/Mod.h"
@@ -1448,7 +1449,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 	const int orgDamage = damage;
 	const int overKillMinimum = type->IgnoreOverKill ? 0 : -4 * _stats.health;
 
-	const int skillId = attack.skill_rules ? attack.skill_rules->Id : -1;
+	const int skillId = attack.skill_rules ? attack.skill_rules->getScriptId() : -1;
 	
 	{
 		ModScript::HitUnit::Output args { damage, bodypart, side, };
@@ -1717,8 +1718,8 @@ RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const Rule
 	{
 		return 0;
 	}
-	RuleItemUseCost cost(skillRules->Cost);
-	applyPercentages(cost, skillRules->Flat);
+	RuleItemUseCost cost(skillRules->getCost());
+	applyPercentages(cost, skillRules->getFlat());
 	
 	return cost;
 }

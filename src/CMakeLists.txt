@@ -312,6 +312,7 @@ set ( mod_src
   Mod/RuleMusic.cpp
   Mod/RuleRegion.cpp
   Mod/RuleResearch.cpp
+  Mod/RuleSkill.cpp
   Mod/RuleSoldier.cpp
   Mod/RuleSoldierBonus.cpp
   Mod/RuleSoldierTransformation.cpp
