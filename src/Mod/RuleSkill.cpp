@@ -97,9 +97,31 @@ const std::vector<std::string> RuleSkill::getRequiredBonus() const
 	return _requiredBonus;
 }
 
+namespace
+{
+std::string debugDisplayScript(const RuleSkill* rs)
+{
+	if (rs)
+	{
+		std::string s;
+		s += RuleSkill::ScriptName;
+		s += "(name: \"";
+		s += rs->getType();
+		s += "\")";
+		return s;
+	}
+	else
+	{
+		return "null";
+	}
+}
+}
+
 void RuleSkill::ScriptRegister(ScriptParserBase* parser)
 {
 	Bind<RuleSkill> rs = { parser };
 	rs.addScriptValue<&RuleSkill::_scriptValues>();
+	rs.addDebugDisplay<&debugDisplayScript>();
 }
+
 }
