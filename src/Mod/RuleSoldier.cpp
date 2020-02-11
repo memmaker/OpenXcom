@@ -59,10 +59,6 @@ RuleSoldier::~RuleSoldier()
 	{
 		delete *i;
 	}
-	for (auto i = _skills.begin(); i != _skills.end(); ++i)
-	{
-		delete *i;
-	}
 }
 
 /**

@@ -556,6 +556,10 @@ Mod::~Mod()
 	{
 		delete i->second;
 	}
+	for (std::map<std::string, RuleSkill*>::iterator i = _skills.begin(); i != _skills.end(); ++i)
+	{
+		delete i->second;
+	}
 	for (std::map<std::string, Unit*>::iterator i = _units.begin(); i != _units.end(); ++i)
 	{
 		delete i->second;
