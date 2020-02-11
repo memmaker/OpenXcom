@@ -232,9 +232,8 @@ void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vecto
 {
 	auto unit = action->actor;
 	action->weapon = nullptr;
-	
-	// skip the vehicles, we need only X-Com soldiers WITH equipment-layout
-	if (unit->getGeoscapeSoldier()->getEquipmentLayout()->empty() || action->type == BA_NONE)
+
+	if (action->type == BA_NONE)
 	{
 		return;
 	}
@@ -263,14 +262,11 @@ void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vecto
 					return;
 				}
 				// check inventory
-				for (auto layoutItem : *unit->getGeoscapeSoldier()->getEquipmentLayout())
+				for (auto invItem : *unit->getInventory())
 				{
-					if (itemType != layoutItem->getItemType()) continue;
-					auto inventorySlot = _game->getMod()->getInventory(layoutItem->getSlot(), true);
-					auto item = unit->getItem(inventorySlot, layoutItem->getSlotX(), layoutItem->getSlotY());
-					if (item)
+					if (invItem->getRules()->getType() == itemType)
 					{
-						action->weapon = item;
+						action->weapon = invItem;
 						return;
 					}
 				}
@@ -310,16 +306,14 @@ BattleType SkillMenuState::getBattleTypeFromActionType(BattleActionType actionTy
 	}
 }
 
-BattleItem *SkillMenuState::findItemInInventory(const BattleUnit *unit, BattleType battleType)
+BattleItem *SkillMenuState::findItemInInventory(BattleUnit *unit, BattleType battleType)
 {
 	// check inventory
-	for (auto layoutItem : *unit->getGeoscapeSoldier()->getEquipmentLayout())
+	for (auto invItem : *unit->getInventory())
 	{
-		auto inventorySlot = _game->getMod()->getInventory(layoutItem->getSlot(), true);
-		auto item = unit->getItem(inventorySlot, layoutItem->getSlotX(), layoutItem->getSlotY());
-		if (item->getRules()->getBattleType() == battleType)
+		if (invItem->getRules()->getBattleType() == battleType)
 		{
-			return item;
+			return invItem;
 		}
 	}
 	return 0;
