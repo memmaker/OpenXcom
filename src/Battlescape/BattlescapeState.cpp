@@ -1978,6 +1978,35 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 }
 
 /**
+ * Updates the visible unit indicators from the passed list of units.
+ * Only updates as directly visible units.
+ */
+void BattlescapeState::updateVisibleUnits(std::vector<BattleUnit*> *units)
+{
+	for (int i = 0; i < VISIBLE_MAX; ++i)
+	{
+		_btnVisibleUnit[i]->setVisible(false);
+		_numVisibleUnit[i]->setVisible(false);
+		_visibleUnit[i] = 0;
+	}
+
+	if (units->empty())
+		return;
+
+	// go through all units visible
+	int j = 0;
+	for (std::vector<BattleUnit*>::iterator i = units->begin(); i != units->end() && j < VISIBLE_MAX; ++i)
+	{
+		_btnVisibleUnit[j]->setTooltip(_txtVisibleUnitTooltip[j]);
+		_btnVisibleUnit[j]->setVisible(true);
+		_numVisibleUnit[j]->setVisible(true);
+		_visibleUnit[j] = (*i);
+		++j;
+	}
+	_numberOfDirectlyVisibleUnits = j;
+}
+
+/**
  * Shifts the red colors of the visible unit buttons backgrounds.
  */
 void BattlescapeState::blinkVisibleUnitButtons()

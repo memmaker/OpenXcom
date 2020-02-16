@@ -822,6 +822,43 @@ bool TileEngine::calculateUnitsInFOV(BattleUnit* unit, const Position eventPos, 
 }
 
 /**
+ * Beginning with the units which are currently visible to the player,
+ * this fills visibleUnits with all units of the hostile faction which
+ * could be visible from originPos by unit.
+ */
+void TileEngine::calculateUnitsForLoSPreview(std::vector<BattleUnit*> *visibleUnits, BattleUnit* unit, const Position originPos)
+{
+	//Loop through all units specified and figure out which ones we could potentially see.
+	for (std::vector<BattleUnit*>::iterator i = _save->getUnits()->begin(); i != _save->getUnits()->end(); ++i)
+	{
+		if (!(*i)->getVisible() || (*i)->getFaction() != FACTION_HOSTILE)
+			continue;
+
+		Position posOther = (*i)->getPosition();
+		int sizeOther = (*i)->getArmor()->getSize();
+		for (int x = 0; x < sizeOther; ++x)
+		{
+			for (int y = 0; y < sizeOther; ++y)
+			{
+				Position posToCheck = posOther + Position(x, y, 0);
+				for (int directionView = 0; directionView < 8; directionView++)
+				{
+					if (unit->checkViewSector(originPos, posToCheck, directionView))
+					{
+						if (visible(unit, originPos, _save->getTile(posToCheck)))
+						{
+							visibleUnits->push_back((*i));
+							x = y = sizeOther; //If a unit's tile is visible there's no need to check the others: break the loops.
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
 * Calculates line of sight of tiles for a player controlled soldier.
 * If supplied with an event position differing from the soldier's position, it will only
 * calculate tiles within a narrow arc.
@@ -966,6 +1003,29 @@ bool TileEngine::calculateFOV(BattleUnit *unit, bool doTileRecalc, bool doUnitRe
 	return doUnitRecalc ? calculateUnitsInFOV(unit) : false;
 }
 
+Position TileEngine::getSightOriginVoxel(BattleUnit *currentUnit,  Position originPosition)
+{
+	Position originVoxel;
+	originVoxel = Position((originPosition.x * 16) + 7, (originPosition.y * 16) + 8, originPosition.z*24);
+	originVoxel.z += -_save->getTile(originPosition)->getTerrainLevel();
+	originVoxel.z += currentUnit->getHeight() + currentUnit->getFloatHeight() - 1; //one voxel lower (eye level)
+	Tile *tileAbove = _save->getTile(originPosition + Position(0,0,1));
+	if (currentUnit->getArmor()->getSize() > 1)
+	{
+		originVoxel.x += 8;
+		originVoxel.y += 8;
+		originVoxel.z += 1; //topmost voxel
+	}
+	if (originVoxel.z >= (originPosition.z + 1)*24 && (!tileAbove || !tileAbove->hasNoFloor(0)))
+	{
+		while (originVoxel.z >= (originPosition.z + 1)*24)
+		{
+			originVoxel.z--;
+		}
+	}
+	return originVoxel;
+}
+
 /**
  * Gets the origin voxel of a unit's eyesight (from just one eye or something? Why is it x+7??
  * @param currentUnit The watcher.
@@ -974,26 +1034,8 @@ bool TileEngine::calculateFOV(BattleUnit *unit, bool doTileRecalc, bool doUnitRe
 Position TileEngine::getSightOriginVoxel(BattleUnit *currentUnit)
 {
 	// determine the origin and target voxels for the raytrace
-	Position originVoxel;
-	originVoxel = Position((currentUnit->getPosition().x * 16) + 7, (currentUnit->getPosition().y * 16) + 8, currentUnit->getPosition().z*24);
-	originVoxel.z += -_save->getTile(currentUnit->getPosition())->getTerrainLevel();
-	originVoxel.z += currentUnit->getHeight() + currentUnit->getFloatHeight() - 1; //one voxel lower (eye level)
-	Tile *tileAbove = _save->getTile(currentUnit->getPosition() + Position(0,0,1));
-	if (currentUnit->getArmor()->getSize() > 1)
-	{
-		originVoxel.x += 8;
-		originVoxel.y += 8;
-		originVoxel.z += 1; //topmost voxel
-	}
-	if (originVoxel.z >= (currentUnit->getPosition().z + 1)*24 && (!tileAbove || !tileAbove->hasNoFloor(0)))
-	{
-		while (originVoxel.z >= (currentUnit->getPosition().z + 1)*24)
-		{
-			originVoxel.z--;
-		}
-	}
-
-	return originVoxel;
+	OpenXcom::Position originPosition = currentUnit->getPosition();
+	return getSightOriginVoxel(currentUnit, originPosition);
 }
 
 /**
@@ -1003,6 +1045,12 @@ Position TileEngine::getSightOriginVoxel(BattleUnit *currentUnit)
  * @return True if visible.
  */
 bool TileEngine::visible(BattleUnit *currentUnit, Tile *tile)
+{
+	Position originPosition = currentUnit->getPosition();
+	return visible(currentUnit, originPosition, tile);
+}
+
+bool TileEngine::visible(BattleUnit *currentUnit, Position originPosition, Tile *tile)
 {
 	// if there is no tile or no unit, we can't see it
 	if (!tile || !tile->getUnit())
@@ -1014,7 +1062,7 @@ bool TileEngine::visible(BattleUnit *currentUnit, Tile *tile)
 	if (currentUnit->getFaction() == tile->getUnit()->getFaction()) return true;
 
 	// if beyond global max. range, nobody can see anyone
-	int currentDistanceSq = Position::distance2dSq(currentUnit->getPosition(), tile->getPosition());
+	int currentDistanceSq = Position::distance2dSq(originPosition, tile->getPosition());
 	if (currentDistanceSq > getMaxViewDistanceSq())
 	{
 		return false;
@@ -1053,7 +1101,7 @@ bool TileEngine::visible(BattleUnit *currentUnit, Tile *tile)
 		return false;
 	}
 
-	Position originVoxel = getSightOriginVoxel(currentUnit);
+	Position originVoxel = getSightOriginVoxel(currentUnit, originPosition);
 
 	Position scanVoxel;
 	std::vector<Position> _trajectory;

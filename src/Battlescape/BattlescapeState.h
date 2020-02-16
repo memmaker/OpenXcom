@@ -219,6 +219,8 @@ public:
 	void showPsiButton(bool show);
 	/// Shows the special weapon button.
 	void showSpecialButton(bool show, int sprite = 1);
+	/// Updates the visible unit indicators. Used for LoS Preview.
+	void updateVisibleUnits(std::vector<BattleUnit*> *units);
 	/// Clears mouse-scrolling state.
 	void clearMouseScrollingState();
 	/// Returns a pointer to the battlegame, in case we need its functions.

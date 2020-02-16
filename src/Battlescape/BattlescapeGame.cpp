@@ -1895,6 +1895,24 @@ void BattlescapeGame::primaryAction(Position pos)
 				_save->getPathfinding()->removePreview();
 			}
 			_currentAction.target = pos;
+
+			// what would be a good way to expose this option?
+			bool previewLoS = true;
+			if (previewLoS)
+			{
+				if (_currentAction.target != _save->getSelectedUnit()->getPosition())
+				{
+					std::vector<BattleUnit*> *visibleUnits = new std::vector<BattleUnit*>();
+					_save->getTileEngine()->calculateUnitsForLoSPreview(visibleUnits, _save->getSelectedUnit(), _currentAction.target);
+					_parentState->updateVisibleUnits(visibleUnits);
+					delete visibleUnits;
+				}
+				else
+				{
+					_parentState->updateSoldierInfo(false);
+				}
+			}
+
 			_save->getPathfinding()->calculate(_currentAction.actor, _currentAction.target);
 
 			_currentAction.strafe = false;

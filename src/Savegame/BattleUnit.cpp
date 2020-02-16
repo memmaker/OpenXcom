@@ -4048,13 +4048,7 @@ void BattleUnit::deriveRank()
 	}
 }
 
-/**
-* this function checks if a tile is visible from either of the unit's tiles, using maths.
-* @param pos the position to check against
-* @param useTurretDirection use turret facing (true) or body facing (false) for sector calculation
-* @return what the maths decide
-*/
-bool BattleUnit::checkViewSector (Position pos, bool useTurretDirection /* = false */) const
+bool BattleUnit::checkViewSector(Position originPos, Position targetPos, int direction) const
 {
 	int unitSize = getArmor()->getSize();
 	//Check view cone from each of the unit's tiles
@@ -4062,9 +4056,9 @@ bool BattleUnit::checkViewSector (Position pos, bool useTurretDirection /* = fal
 	{
 		for (int y = 0; y < unitSize; ++y)
 		{
-			int deltaX = pos.x + x - _pos.x;
-			int deltaY = _pos.y - pos.y - y;
-			switch (useTurretDirection ? _directionTurret : _direction)
+			int deltaX = targetPos.x + x - originPos.x;
+			int deltaY = originPos.y - targetPos.y - y;
+			switch (direction)
 			{
 			case 0:
 				if ((deltaX + deltaY >= 0) && (deltaY - deltaX >= 0))
@@ -4104,6 +4098,19 @@ bool BattleUnit::checkViewSector (Position pos, bool useTurretDirection /* = fal
 		}
 	}
 	return false;
+}
+
+/**
+* this function checks if a tile is visible from either of the unit's tiles, using maths.
+* @param pos the position to check against
+* @param useTurretDirection use turret facing (true) or body facing (false) for sector calculation
+* @return what the maths decide
+*/
+bool BattleUnit::checkViewSector (Position targetPos, bool useTurretDirection /* = false */) const
+{
+	auto originPos = _pos;
+	int direction = useTurretDirection ? _directionTurret : _direction;
+	return checkViewSector(originPos, targetPos, direction);
 }
 
 /**
