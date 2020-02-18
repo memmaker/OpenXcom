@@ -38,6 +38,7 @@ private:
 	bool _isPsiRequired;
 	bool _checkHandsOnly;
 	ScriptValues<RuleSkill> _scriptValues;
+	ModScript::BattleUnitScripts::Container _battleUnitScripts;
 public:
 	/// Default constructor.
 	RuleSkill(const std::string &type);
@@ -57,6 +58,12 @@ public:
 	static constexpr const char *ScriptName = "RuleSkill";
 	/// Register all useful function used by script.
 	static void ScriptRegister(ScriptParserBase* parser);
+
+	/// Gets script.
+	template<typename Script>
+	const typename Script::Container &getScript() const { return _battleUnitScripts.get<Script>(); }
+	const ScriptValues<RuleSkill> &getScriptValuesRaw() const { return _scriptValues; }
+
 };
 
 }

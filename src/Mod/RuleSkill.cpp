@@ -57,6 +57,8 @@ void RuleSkill::load(const YAML::Node &node, Mod *mod, const ModScript &parsers)
 	compBattleType = compBattleType > BT_CORPSE ? 0 : compBattleType;
 	_compatibleBattleType = static_cast<BattleType>(compBattleType);
 
+	_battleUnitScripts.load(_type, node, parsers.battleUnitScripts);
+
 	_scriptValues.load(node, parsers.getShared());
 }
 

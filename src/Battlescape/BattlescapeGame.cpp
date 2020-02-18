@@ -177,7 +177,7 @@ bool BattleActionCost::spendTU(std::string *message)
  * @param unit unit performing attack.
  * @param item weapon of choice.
  */
-BattleActionAttack::BattleActionAttack(BattleActionType action, BattleUnit *unit, BattleItem *item, BattleItem *ammo) : type{ action }, attacker{ unit }, weapon_item{ nullptr }, damage_item{ nullptr }
+BattleActionAttack::BattleActionAttack(BattleActionType action, BattleUnit *unit, BattleItem *item, BattleItem *ammo) : type{ action }, attacker{ unit }
 {
 	if (item)
 	{

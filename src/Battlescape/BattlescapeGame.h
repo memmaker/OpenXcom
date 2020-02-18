@@ -46,18 +46,18 @@ enum BattleActionMove { BAM_NORMAL = 0, BAM_RUN = 1, BAM_STRAFE = 2 };
 struct BattleActionCost : RuleItemUseCost
 {
 	BattleActionType type;
-	BattleUnit *actor;
-	BattleItem *weapon;
-	const RuleSkill* skillRules; // if defined, this is a skill action
+	BattleUnit *actor = nullptr;
+	BattleItem *weapon = nullptr;
+	const RuleSkill* skillRules = nullptr; // if defined, this is a skill action
 
 	/// Default constructor.
-	BattleActionCost() : type(BA_NONE), actor(0), weapon(0), skillRules(0) { }
+	BattleActionCost() : type(BA_NONE) { }
 
 	/// Constructor from unit.
-	BattleActionCost(BattleUnit *unit) : type(BA_NONE), actor(unit), weapon(0), skillRules(0) { }
+	BattleActionCost(BattleUnit *unit) : type(BA_NONE), actor(unit) { }
 
 	/// Constructor with update.
-	BattleActionCost(BattleActionType action, BattleUnit *unit, BattleItem *item) : type(action), actor(unit), weapon(item), skillRules(0) { updateTU(); }
+	BattleActionCost(BattleActionType action, BattleUnit *unit, BattleItem *item) : type(action), actor(unit), weapon(item) { updateTU(); }
 
 	/// Update value of TU based of actor, weapon and type.
 	void updateTU();
@@ -99,13 +99,13 @@ struct BattleAction : BattleActionCost
 struct BattleActionAttack
 {
 	BattleActionType type;
-	BattleUnit *attacker;
-	BattleItem *weapon_item;
-	BattleItem *damage_item;
-	const RuleSkill *skill_rules;
+	BattleUnit *attacker = nullptr;
+	BattleItem *weapon_item = nullptr;
+	BattleItem *damage_item = nullptr;
+	const RuleSkill *skill_rules = nullptr;
 
 	/// Default constructor.
-	BattleActionAttack(BattleActionType action = BA_NONE, BattleUnit *unit = nullptr) : type{ action }, attacker{ unit }, weapon_item{ nullptr }, damage_item{ nullptr }, skill_rules{ nullptr }
+	BattleActionAttack(BattleActionType action = BA_NONE, BattleUnit *unit = nullptr) : type{ action }, attacker{ unit }
 	{
 
 	}
