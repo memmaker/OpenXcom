@@ -65,6 +65,7 @@
 #include "RuleTerrain.h"
 #include "MapScript.h"
 #include "RuleSoldier.h"
+#include "RuleSkill.h"
 #include "RuleCommendations.h"
 #include "AlienRace.h"
 #include "RuleEnviroEffects.h"
@@ -554,6 +555,10 @@ Mod::~Mod()
 		delete i->second;
 	}
 	for (std::map<std::string, RuleSoldier*>::iterator i = _soldiers.begin(); i != _soldiers.end(); ++i)
+	{
+		delete i->second;
+	}
+	for (std::map<std::string, RuleSkill*>::iterator i = _skills.begin(); i != _skills.end(); ++i)
 	{
 		delete i->second;
 	}
@@ -1660,6 +1665,14 @@ void Mod::loadFile(const FileMap::FileRecord &filerec, ModScript &parsers)
 			rule->load(*i, parsers, this);
 		}
 	}
+	for (YAML::const_iterator i = doc["skills"].begin(); i != doc["skills"].end(); ++i)
+	{
+		RuleSkill *rule = loadRule(*i, &_skills, &_skillsIndex);
+		if (rule != 0)
+		{
+			rule->load(*i, parsers);
+		}
+	}
 	for (YAML::const_iterator i = doc["soldiers"].begin(); i != doc["soldiers"].end(); ++i)
 	{
 		RuleSoldier *rule = loadRule(*i, &_soldiers, &_soldiersIndex);
@@ -2701,6 +2714,16 @@ MapDataSet *Mod::getMapDataSet(const std::string &name)
 	{
 		return map->second;
 	}
+}
+
+/**
+ * Returns the rules for the specified skill.
+ * @param name Skill type.
+ * @return Rules for the skill.
+ */
+RuleSkill *Mod::getSkill(const std::string &name, bool error) const
+{
+	return getRule(name, "Skill", _skills, error);
 }
 
 /**

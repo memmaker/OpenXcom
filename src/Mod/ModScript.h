@@ -41,6 +41,7 @@ class Armor;
 class RuleInventory;
 class RuleResearch;
 class RuleManufacture;
+class RuleSkill;
 class AlienRace;
 class RuleAlienMission;
 class Base;
@@ -99,15 +100,19 @@ class ModScript
 	{
 		VisibilityUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, int, int, int>
+	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int>
 	{
 		HitUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
+	};
+	struct SkillUseUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&>, BattleUnit*, BattleItem*, SavedBattleGame*, const RuleSkill*, int, int>
+	{
+		SkillUseUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
 	struct TryPsiAttackUnitParser : ScriptParserEvents<ScriptOutputArgs<int&>, const BattleItem*, const BattleUnit*, const BattleUnit*, int, int, int>
 	{
 		TryPsiAttackUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, int, int, int, int, int, int>
+	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int>
 	{
 		DamageUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
@@ -239,6 +244,7 @@ public:
 	using ReactionUnitAction = MACRO_NAMED_SCRIPT("reactionUnitAction", ReactionUnitParser);
 	using ReactionUnitReaction = MACRO_NAMED_SCRIPT("reactionUnitReaction", ReactionUnitParser);
 
+	using SkillUseUnit = MACRO_NAMED_SCRIPT("skillUseUnit", SkillUseUnitParser);
 	using TryPsiAttackUnit = MACRO_NAMED_SCRIPT("tryPsiAttackUnit", TryPsiAttackUnitParser);
 	using HitUnit = MACRO_NAMED_SCRIPT("hitUnit", HitUnitParser);
 	using DamageUnit = MACRO_NAMED_SCRIPT("damageUnit", DamageUnitParser);
@@ -316,6 +322,7 @@ public:
 		ReactionUnitAction,
 		ReactionUnitReaction,
 
+		SkillUseUnit,
 		TryPsiAttackUnit,
 		HitUnit,
 		DamageUnit,
