@@ -54,6 +54,10 @@ namespace OpenXcom
  */
 SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuState(action)
 {
+	// cache the currently selected weapon and skill
+	const RuleSkill *currentSkill = _action->skillRules;
+	BattleItem *currentWeapon = _action->weapon;
+
 	_screen = false;
 	
 	// Set palette
@@ -87,8 +91,9 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 			hotkeys.pop_back();
 		}
 	}
-	_action->skillRules = nullptr;
-	_action->weapon = 0;
+	// restore previously selected weapon and skill
+	_action->skillRules = currentSkill;
+	_action->weapon = currentWeapon;
 }
 
 /**
