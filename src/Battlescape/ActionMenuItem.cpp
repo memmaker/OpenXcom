@@ -96,7 +96,14 @@ void ActionMenuItem::setAction(BattleActionType action, const std::string &descr
 	_tu = tu;
 	_redraw = true;
 }
-
+/**
+ * Links with a skill.
+ * @param skill The linked skill.
+ */
+void ActionMenuItem::setSkill(const RuleSkill *skill)
+{
+	_skill = skill;
+}
 /**
  * Gets the action that was linked to this menu item.
  * @return Action that was linked to this menu item.
@@ -105,7 +112,14 @@ BattleActionType ActionMenuItem::getAction() const
 {
 	return _action;
 }
-
+/**
+ * Gets the action that was linked to this menu item.
+ * @return Action that was linked to this menu item.
+ */
+const RuleSkill* ActionMenuItem::getSkill() const
+{
+	return _skill;
+}
 /**
  * Gets the action tus that were linked to this menu item.
  * @return The timeunits that were linked to this menu item.

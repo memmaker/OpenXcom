@@ -36,10 +36,10 @@ class EquipmentLayoutItem;
 class SkillMenuState : public ActionMenuState
 {
 private:
-	/// Checck if the required commendations for this skill are available
+	/// Checck if the required bonuses for this skill are available
 	bool hasBonus(Soldier *soldier, const RuleSkill *skillRules);
 	/// Adds a new menu item for an action.
-	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key);
+	void addItem(const RuleSkill* skill, int *id, SDLKey key);
 	void chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, BattleType compatibleWeaponType, bool checkHandsOnly);
 	BattleItem *findItemInInventory(BattleUnit *unit, BattleType battleType);
 	BattleType getBattleTypeFromActionType(BattleActionType actionType);

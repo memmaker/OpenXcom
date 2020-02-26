@@ -87,7 +87,7 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 		{
 			_action->skillRules = skill;
 			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->getCompatibleBattleType(), skill->checkHandsOnly());
-			addItem(skill->getTargetMode(), skill->getType(), &id, hotkeys.back());
+			addItem(skill, &id, hotkeys.back());
 			hotkeys.pop_back();
 		}
 	}
@@ -106,7 +106,7 @@ SkillMenuState::~SkillMenuState()
 
 bool SkillMenuState::hasBonus(Soldier *soldier, const RuleSkill *skillRules)
 {
-	// Does the soldier have the required commendations?
+	// Does the soldier have the required bonus?
 	for (auto reqd_bonus : skillRules->getRequiredBonus())
 	{
 		bool found = false;
@@ -130,8 +130,12 @@ bool SkillMenuState::hasBonus(Soldier *soldier, const RuleSkill *skillRules)
  * @param name Action description.
  * @param id Pointer to the new item ID.
  */
-void SkillMenuState::addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key)
+void SkillMenuState::addItem(const RuleSkill* skill, int *id, SDLKey key)
 {
+	BattleActionType ba = skill->getTargetMode();
+	const std::string &name = skill->getType();
+
+
 	std::string s1, s2;
 	RuleItemUseCost cost = _action->actor->getActionTUs(ba, _action->skillRules);
 	
@@ -152,6 +156,7 @@ void SkillMenuState::addItem(BattleActionType ba, const std::string &name, int *
 	}
 
 	_actionMenu[*id]->setAction(ba, tr(name), s1, s2, cost.Time);
+	_actionMenu[*id]->setSkill(skill);
 	_actionMenu[*id]->setVisible(true);
 	
 	if (key != SDLK_UNKNOWN)
@@ -187,8 +192,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 		std::string actionResult = "STR_UNKNOWN"; // needs a non-empty default/fall-back !
 		
 		OpenXcom::TileEngine *tileEngine = _game->getSavedGame()->getSavedBattle()->getTileEngine();
-		auto skills = _action->actor->getGeoscapeSoldier()->getRules()->getSkills();
-		const RuleSkill *selectedSkill = skills.at(btnID);
+		const RuleSkill *selectedSkill = _actionMenu[btnID]->getSkill();
 		_action->skillRules = selectedSkill;
 		_action->type = _actionMenu[btnID]->getAction();
 		chooseWeaponForSkill(_action, selectedSkill->getCompatibleWeapons(), selectedSkill->getCompatibleBattleType(), selectedSkill->checkHandsOnly());
