@@ -285,36 +285,14 @@ void SkillMenuState::chooseWeaponForSkill(BattleAction* action, const std::vecto
 			}
 		}
 	}
-	if (compatibleBattleType == BT_NONE)
+	if (compatibleBattleType != BT_NONE)
 	{
-		compatibleBattleType = getBattleTypeFromActionType(action->type);
-	}
-	BattleItem *item = findItemInInventory(action->actor, compatibleBattleType);
-	if (item)
-	{
-		action->weapon = item;
-		return;
-	}
-}
-
-BattleType SkillMenuState::getBattleTypeFromActionType(BattleActionType actionType)
-{
-	switch (actionType) {
-		case BA_HIT:
-			return BT_MELEE;
-		case BA_SNAPSHOT:
-		case BA_AIMEDSHOT:
-		case BA_AUTOSHOT:
-		case BA_LAUNCH:
-			return BT_FIREARM;
-		case BA_THROW:
-			return BT_GRENADE;
-		case BA_USE:
-		case BA_PANIC:
-		case BA_MINDCONTROL:
-			return BT_PSIAMP;
-		default:
-			return BT_NONE;
+		BattleItem *item = findItemInInventory(action->actor, compatibleBattleType);
+		if (item)
+		{
+			action->weapon = item;
+			return;
+		}
 	}
 }
 

@@ -42,7 +42,6 @@ private:
 	void addItem(const RuleSkill* skill, int *id, SDLKey key);
 	void chooseWeaponForSkill(BattleAction* action, const std::vector<std::string> &compatibleWeaponTypes, BattleType compatibleWeaponType, bool checkHandsOnly);
 	BattleItem *findItemInInventory(BattleUnit *unit, BattleType battleType);
-	BattleType getBattleTypeFromActionType(BattleActionType actionType);
 public:
 	/// Creates the Action Menu state.
 	SkillMenuState(BattleAction *action, int x, int y);
