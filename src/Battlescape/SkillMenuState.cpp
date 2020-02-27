@@ -57,6 +57,7 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 	// cache the currently selected weapon and skill
 	const RuleSkill *currentSkill = _action->skillRules;
 	BattleItem *currentWeapon = _action->weapon;
+	BattleActionType currentActionType = _action->type;
 
 	_screen = false;
 	
@@ -86,12 +87,14 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
 		{
 			_action->skillRules = skill;
+			_action->type = skill->getTargetMode();
 			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->getCompatibleBattleType(), skill->checkHandsOnly());
 			addItem(skill, &id, hotkeys.back());
 			hotkeys.pop_back();
 		}
 	}
 	// restore previously selected weapon and skill
+	_action->type = currentActionType;
 	_action->skillRules = currentSkill;
 	_action->weapon = currentWeapon;
 }
