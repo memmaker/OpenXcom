@@ -94,6 +94,13 @@ struct BattleAction : BattleActionCost
 	{
 		return strafe ? BAM_STRAFE : run ? BAM_RUN : BAM_NORMAL;
 	}
+
+	void clear()
+	{
+		targeting = false;
+		type = BA_NONE;
+		skillRules = nullptr;
+	}
 };
 
 struct BattleActionAttack

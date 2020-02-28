@@ -50,18 +50,12 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 	BattleItem* currentWeapon = _action->weapon;
 	const RuleSkill* currentSkill = _action->skillRules;
 
+	auto soldier = _action->actor->getGeoscapeSoldier();
+
 	_screen = false;
 
 	// Set palette
 	_game->getSavedGame()->getSavedBattle()->setPaletteByDepth(this);
-
-	for (int i = 0; i < 6; ++i)
-	{
-		_actionMenu[i] = new ActionMenuItem(i, _game, x, y);
-		add(_actionMenu[i]);
-		_actionMenu[i]->setVisible(false);
-		_actionMenu[i]->onMouseClick((ActionHandler)&SkillMenuState::btnActionMenuItemClick);
-	}
 
 	// Build up the popup menu
 	int id = 0;
@@ -73,14 +67,19 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 		Options::keyBattleActionItem2,
 		Options::keyBattleActionItem1
 	};
-	auto soldier = _action->actor->getGeoscapeSoldier();
+
 	for (auto skill : soldier->getRules()->getSkills())
 	{
-		if (!hotkeys.empty()
-			&& soldierHasAllRequiredBonusesForSkill(soldier, skill)
+		if (soldierHasAllRequiredBonusesForSkill(soldier, skill)
 			&& (skill->getCost().Time > 0 || skill->getCost().Mana > 0)
 			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
 		{
+			// Prepare the ActionMenuItem
+			_actionMenu[id] = new ActionMenuItem(id, _game, x, y);
+			add(_actionMenu[id]);
+			_actionMenu[id]->setVisible(false);
+			_actionMenu[id]->onMouseClick((ActionHandler)&SkillMenuState::btnActionMenuItemClick);
+
 			// Attention: we are modifying _action here
 			_action->skillRules = skill;
 			_action->type = skill->getTargetMode();
@@ -88,10 +87,17 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 			// Attention: we are modifying _action->weapon inside!
 			chooseWeaponForSkill(_action, skill->getCompatibleWeapons(), skill->getCompatibleBattleType(), skill->checkHandsOnly());
 
-			// Attention: here the modified values are consumed
-			addItem(skill, &id, hotkeys.back());
+			// Attention: here the modified values are consumed (and id is incremented)
+			if (!hotkeys.empty())
+			{
+				addItem(skill, &id, hotkeys.back());
+				hotkeys.pop_back();
+			}
+			else
+			{
+				addItem(skill, &id);
+			}
 
-			hotkeys.pop_back();
 		}
 	}
 
@@ -209,8 +215,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 
 		if (!continueAction || _action->type == BA_NONE)
 		{
-			_action->type = BA_NONE;
-			_action->targeting = false;
+			_action->clear();
 			_game->popState();
 			return;
 		}

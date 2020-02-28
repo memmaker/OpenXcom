@@ -244,7 +244,6 @@ public:
 	using ReactionUnitAction = MACRO_NAMED_SCRIPT("reactionUnitAction", ReactionUnitParser);
 	using ReactionUnitReaction = MACRO_NAMED_SCRIPT("reactionUnitReaction", ReactionUnitParser);
 
-	using SkillUseUnit = MACRO_NAMED_SCRIPT("skillUseUnit", SkillUseUnitParser);
 	using TryPsiAttackUnit = MACRO_NAMED_SCRIPT("tryPsiAttackUnit", TryPsiAttackUnitParser);
 	using HitUnit = MACRO_NAMED_SCRIPT("hitUnit", HitUnitParser);
 	using DamageUnit = MACRO_NAMED_SCRIPT("damageUnit", DamageUnitParser);
@@ -298,6 +297,12 @@ public:
 	using CloseQuarterMultiplierStatBonus = MACRO_NAMED_SCRIPT("closeQuartersMultiplier", BonusStatsParser);
 
 	////////////////////////////////////////////////////////////
+	//					skill script
+	////////////////////////////////////////////////////////////
+
+	using SkillUseUnit = MACRO_NAMED_SCRIPT("skillUseUnit", SkillUseUnitParser);
+
+	////////////////////////////////////////////////////////////
 	//					ufo script
 	////////////////////////////////////////////////////////////
 
@@ -322,7 +327,6 @@ public:
 		ReactionUnitAction,
 		ReactionUnitReaction,
 
-		SkillUseUnit,
 		TryPsiAttackUnit,
 		HitUnit,
 		DamageUnit,
@@ -372,6 +376,10 @@ public:
 		CloseQuarterMultiplierStatBonus
 	>;
 
+	using SkillScripts = ScriptGroup<Mod,
+		SkillUseUnit
+	>;
+
 	using UfoScripts = ScriptGroup<Mod,
 		DetectUfoFromBase,
 		DetectUfoFromCraft
@@ -387,6 +395,7 @@ public:
 	BattleUnitScripts battleUnitScripts = { _shared, _mod, };
 	BattleItemScripts battleItemScripts = { _shared, _mod, };
 	BonusStatsScripts bonusStatsScripts = { _shared, _mod, };
+	SkillScripts skillScripts = { _shared, _mod, };
 	UfoScripts ufoScripts = { _shared, _mod, };
 	SoldierBonusScripts soldierBonusScripts = { _shared, _mod, };
 

@@ -62,7 +62,7 @@ void RuleSkill::load(const YAML::Node& node, const ModScript& parsers)
 
 	_scriptValues.load(node, parsers.getShared());
 
-	_battleUnitScripts.load(_type, node, parsers.battleUnitScripts);
+	_skillScripts.load(_type, node, parsers.skillScripts);
 }
 
 ////////////////////////////////////////////////////////////

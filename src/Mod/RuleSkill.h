@@ -41,7 +41,7 @@ private:
 	std::vector<std::string> _requiredBonuses;
 
 	ScriptValues<RuleSkill> _scriptValues;
-	ModScript::BattleUnitScripts::Container _battleUnitScripts;
+	ModScript::SkillScripts::Container _skillScripts;
 
 public:
 	/// Creates a blank soldier skill ruleset.
@@ -77,7 +77,7 @@ public:
 
 	/// Gets script.
 	template<typename Script>
-	const typename Script::Container& getScript() const { return _battleUnitScripts.get<Script>(); }
+	const typename Script::Container& getScript() const { return _skillScripts.get<Script>(); }
 	const ScriptValues<RuleSkill>& getScriptValuesRaw() const { return _scriptValues; }
 };
 

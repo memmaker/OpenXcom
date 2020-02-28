@@ -4132,7 +4132,7 @@ bool TileEngine::skillUse(BattleAction *action, const RuleSkill *skill)
 	ModScript::SkillUseUnit::Output args { continueAction, spendTu };
 	ModScript::SkillUseUnit::Worker work { actor, action->weapon, _save, skill, action->type, hasTu };
 
-	work.execute(actor->getArmor()->getScript<ModScript::SkillUseUnit>(), args);
+	work.execute(skill->getScript<ModScript::SkillUseUnit>(), args);
 
 	continueAction = args.getFirst();
 	spendTu = args.getSecond();
