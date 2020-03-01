@@ -100,6 +100,7 @@ struct BattleAction : BattleActionCost
 		targeting = false;
 		type = BA_NONE;
 		skillRules = nullptr;
+		actor = nullptr;
 	}
 };
 

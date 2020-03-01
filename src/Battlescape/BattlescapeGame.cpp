@@ -217,11 +217,7 @@ BattlescapeGame::BattlescapeGame(SavedBattleGame *save, BattlescapeState *parent
 	_playerPanicHandled(true), _AIActionCounter(0), _AISecondMove(false), _playedAggroSound(false),
 	_endTurnRequested(false), _endConfirmationHandled(false), _allEnemiesNeutralized(false)
 {
-
-	_currentAction.actor = 0;
-	_currentAction.targeting = false;
-	_currentAction.type = BA_NONE;
-	_currentAction.skillRules = nullptr;
+	_currentAction.clear();
 
 	_debugPlay = false;
 
@@ -522,12 +518,10 @@ bool BattlescapeGame::kneel(BattleUnit *bu)
 void BattlescapeGame::endTurn()
 {
 	_debugPlay = false;
-	_currentAction.type = BA_NONE;
-	_currentAction.skillRules = nullptr;
+	_currentAction.clear();
 	getMap()->getWaypoints()->clear();
 	_currentAction.waypoints.clear();
 	_parentState->showLaunchButton(false);
-	_currentAction.targeting = false;
 	_AISecondMove = false;
 
 	if (_triggerProcessed.tryRun())
@@ -1651,9 +1645,7 @@ bool BattlescapeGame::cancelCurrentAction(bool bForce)
 					getMap()->getWaypoints()->pop_back();
 					return true;
 				}
-				_currentAction.targeting = false;
-				_currentAction.type = BA_NONE;
-				_currentAction.skillRules = nullptr;
+				_currentAction.clear();
 				setupCursor();
 				_parentState->getGame()->getCursor()->setVisible(true);
 				return true;
@@ -1680,9 +1672,7 @@ void BattlescapeGame::cancelAllActions()
 	getMap()->getWaypoints()->clear();
 	_parentState->showLaunchButton(false);
 
-	_currentAction.targeting = false;
-	_currentAction.type = BA_NONE;
-	_currentAction.skillRules = nullptr;
+	_currentAction.clear();
 	setupCursor();
 	_parentState->getGame()->getCursor()->setVisible(true);
 }
