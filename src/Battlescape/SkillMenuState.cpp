@@ -70,6 +70,10 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 
 	for (auto skill : soldier->getRules()->getSkills())
 	{
+		if ((size_t)id >= std::size(_actionMenu))
+		{
+			break; // break the loop if we run out of space
+		}
 		if (soldierHasAllRequiredBonusesForSkill(soldier, skill)
 			&& (skill->getCost().Time > 0 || skill->getCost().Mana > 0)
 			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
