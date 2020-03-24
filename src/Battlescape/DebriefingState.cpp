@@ -2436,15 +2436,21 @@ void DebriefingState::recoverAlien(BattleUnit *from, Base *base)
 			// 10 points for recovery
 			addStat(surrendered ? "STR_LIVE_ALIENS_SURRENDERED" : "STR_LIVE_ALIENS_RECOVERED", 1, 10);
 		}
-
-		addItemsToBaseStores(ruleLiveAlienItem, base, 1, false);
-		int availableContainment = base->getAvailableContainment(ruleLiveAlienItem->getPrisonType());
-		int usedContainment = base->getUsedContainment(ruleLiveAlienItem->getPrisonType());
-		int freeContainment = availableContainment - (usedContainment * _limitsEnforced);
-		// no capacity, or not enough capacity
-		if (availableContainment == 0 || freeContainment < 0)
+		if (ruleLiveAlienItem->getRecoveryTransformations().empty())
 		{
-			_containmentStateInfo[ruleLiveAlienItem->getPrisonType()] = 2; // 2 = overfull
+			addItemsToBaseStores(ruleLiveAlienItem, base, 1, false);
+			int availableContainment = base->getAvailableContainment(ruleLiveAlienItem->getPrisonType());
+			int usedContainment = base->getUsedContainment(ruleLiveAlienItem->getPrisonType());
+			int freeContainment = availableContainment - (usedContainment * _limitsEnforced);
+			// no capacity, or not enough capacity
+			if (availableContainment == 0 || freeContainment < 0)
+			{
+				_containmentStateInfo[ruleLiveAlienItem->getPrisonType()] = 2; // 2 = overfull
+			}
+		}
+		else
+		{
+			addItemsToBaseStores(ruleLiveAlienItem, base, 1, true);
 		}
 	}
 }
