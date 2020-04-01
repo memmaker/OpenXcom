@@ -296,6 +296,8 @@ public:
 	int getBughuntMinTurn() const;
 	/// Start first turn of battle.
 	void startFirstTurn();
+	/// Run newTurnUnit and newTurnItem scripts
+	void updateScripts();
 	/// Ends the turn.
 	void endTurn();
 	/// Gets animation frame.
